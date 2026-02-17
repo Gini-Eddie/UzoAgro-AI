@@ -17,6 +17,11 @@ By utilizing a custom Spatio-Temporal Intelligence Engine, UzoAgro seamlessly an
 
 ## 🧠 Our Solution: The 5-Pillar Matching Engine
 UzoAgro AI operates as a **Zero-Knowledge Broker**. Neither party sees the other's exact location until a match is secured. 
+### 🖥️ Live Demo Preview
+
+![UzoAgro Home Demo](assets/demo-home.png)
+![UzoAgro Map Demo](assets/demo-maps.png)
+
 
 Instead of simple radius matching, our Python-based AI engine calculates matches using five dimensions:
 1. **Capacity Masking:** Strict verification of truck tonnage.
