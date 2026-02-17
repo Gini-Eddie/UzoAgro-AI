@@ -1,0 +1,11 @@
+[project]
+name = "uzoagro-start"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.129.0",
+    "numpy>=2.4.2",
+    "pandas>=3.0.0",
+    "uvicorn>=0.40.0",
+]

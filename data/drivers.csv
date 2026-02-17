@@ -1,0 +1,51 @@
+﻿driver_id,name,phone,current_city,current_lat,current_lon,home_base_city,home_base_lat,home_base_lon,available_date,available_capacity,allowed_crops
+DRV0001,Uche Ogunleye,08139958838,Enugu,6.4402,7.4943,Lagos,6.5244,3.3792,2026-02-17,45,Sorghum|Rice|Beans
+DRV0002,Chukwuemeka Ibrahim,08141227216,Ibadan,7.3775,3.947,Lagos,6.5244,3.3792,2026-02-20,30,Maize|Millet|Rice
+DRV0003,Bala Okonkwo,08166722344,Kano,12.0022,8.592,Abuja,9.0765,7.3986,2026-02-18,15,Beans
+DRV0004,Fatima Ibrahim,09056164955,Enugu,6.4402,7.4943,Awka,6.21,7.07,2026-02-20,15,Millet|Rice|Maize
+DRV0005,Ahmed Okafor,09087490893,Enugu,6.4402,7.4943,Ilorin,8.4799,4.5418,2026-02-17,45,Maize
+DRV0006,Ngozi Ibrahim,07047308985,Abuja,9.0765,7.3986,Enugu,6.4402,7.4943,2026-02-19,45,Cassava
+DRV0007,Ibrahim Ogunleye,08091756179,Port Harcourt,4.8156,7.0498,Onitsha,6.15,6.78,2026-02-17,30,Tomatoes
+DRV0008,Ahmed Okafor,08153524491,Kano,12.0022,8.592,Ibadan,7.3775,3.947,2026-02-16,10,Millet|Beans
+DRV0009,Amaka Bello,09038538251,Enugu,6.4402,7.4943,Abuja,9.0765,7.3986,2026-02-19,20,Tomatoes|Onions
+DRV0010,Uche Adeniyi,09088461803,Awka,6.21,7.07,Abuja,9.0765,7.3986,2026-02-19,30,Yam|Potatoes
+DRV0011,Aisha Adeyemi,08024716857,Kaduna,10.5105,7.4165,Kano,12.0022,8.592,2026-02-17,45,Millet|Rice|Maize
+DRV0012,Tunde Ogunleye,08025374874,Ibadan,7.3775,3.947,Kaduna,10.5105,7.4165,2026-02-20,15,Tomatoes|Onions
+DRV0013,Samuel Okonkwo,09077187530,Ibadan,7.3775,3.947,Awka,6.21,7.07,2026-02-17,30,Beans|Maize|Rice
+DRV0014,Tunde Adeyemi,08090388981,Port Harcourt,4.8156,7.0498,Awka,6.21,7.07,2026-02-18,20,Beans
+DRV0015,Chukwuemeka Abiola,08021496211,Abuja,9.0765,7.3986,Onitsha,6.15,6.78,2026-02-19,5,Tomatoes
+DRV0016,Emeka Ogunleye,07038427073,Kano,12.0022,8.592,Ilorin,8.4799,4.5418,2026-02-20,45,Peppers
+DRV0017,Ibrahim Okafor,09068800797,Abuja,9.0765,7.3986,Kano,12.0022,8.592,2026-02-20,20,Maize
+DRV0018,Chukwuemeka Uba,08188979095,Enugu,6.4402,7.4943,Ibadan,7.3775,3.947,2026-02-17,5,Rice|Maize|Sorghum
+DRV0019,Aisha Adeniyi,08147376585,Lagos,6.5244,3.3792,Ibadan,7.3775,3.947,2026-02-19,10,Peppers
+DRV0020,Ngozi Adeyemi,07064634663,Ilorin,8.4799,4.5418,Kano,12.0022,8.592,2026-02-17,5,Millet|Beans|Maize
+DRV0021,Uche Okonkwo,08018135295,Ibadan,7.3775,3.947,Kaduna,10.5105,7.4165,2026-02-19,45,Yam
+DRV0022,Tunde Balogun,08166623995,Onitsha,6.15,6.78,Abuja,9.0765,7.3986,2026-02-17,15,Yam
+DRV0023,Aisha Okonkwo,08022517517,Kano,12.0022,8.592,Ilorin,8.4799,4.5418,2026-02-17,10,Cassava|Yam
+DRV0024,Emeka Nwosu,08062401521,Ibadan,7.3775,3.947,Lagos,6.5244,3.3792,2026-02-18,20,Potatoes|Cassava
+DRV0025,Ahmed Abiola,08087736262,Awka,6.21,7.07,Abuja,9.0765,7.3986,2026-02-20,5,Tomatoes|Peppers
+DRV0026,Tunde Adeniyi,08117634247,Ilorin,8.4799,4.5418,Kano,12.0022,8.592,2026-02-20,5,Sorghum
+DRV0027,Fatima Ibrahim,08187701200,Enugu,6.4402,7.4943,Abuja,9.0765,7.3986,2026-02-20,5,Onions
+DRV0028,Ifeanyi Ogunleye,08199889098,Ilorin,8.4799,4.5418,Kaduna,10.5105,7.4165,2026-02-18,10,Yam|Cassava
+DRV0029,Bala Ibrahim,08071510041,Kano,12.0022,8.592,Port Harcourt,4.8156,7.0498,2026-02-20,30,Sorghum
+DRV0030,Ahmed Eze,09019233013,Onitsha,6.15,6.78,Ilorin,8.4799,4.5418,2026-02-17,15,Cassava
+DRV0031,Amaka Adeyemi,08099639081,Kaduna,10.5105,7.4165,Abuja,9.0765,7.3986,2026-02-20,15,Tomatoes
+DRV0032,Aisha Bello,08146553958,Abuja,9.0765,7.3986,Enugu,6.4402,7.4943,2026-02-18,30,Beans|Maize|Sorghum
+DRV0033,Samuel Ogunleye,08022388090,Abuja,9.0765,7.3986,Ilorin,8.4799,4.5418,2026-02-19,15,Beans
+DRV0034,Emeka Bello,07084045292,Awka,6.21,7.07,Port Harcourt,4.8156,7.0498,2026-02-19,30,Rice
+DRV0035,Chukwuemeka Chukwu,08167684996,Awka,6.21,7.07,Ilorin,8.4799,4.5418,2026-02-17,5,Yam|Cassava
+DRV0036,Ibrahim Ibrahim,09085146293,Onitsha,6.15,6.78,Abuja,9.0765,7.3986,2026-02-19,30,Tomatoes
+DRV0037,Fatima Okonkwo,08154585178,Awka,6.21,7.07,Onitsha,6.15,6.78,2026-02-19,45,Onions
+DRV0038,Fatima Okonkwo,07039854548,Awka,6.21,7.07,Enugu,6.4402,7.4943,2026-02-17,20,Yam|Potatoes
+DRV0039,Fatima Chukwu,09019317495,Lagos,6.5244,3.3792,Abuja,9.0765,7.3986,2026-02-18,15,Onions|Peppers|Tomatoes
+DRV0040,Emeka Uba,09015134794,Enugu,6.4402,7.4943,Port Harcourt,4.8156,7.0498,2026-02-16,30,Potatoes|Cassava
+DRV0041,Aisha Nwosu,08144188276,Ibadan,7.3775,3.947,Ilorin,8.4799,4.5418,2026-02-16,45,Potatoes
+DRV0042,Ifeanyi Nwosu,08099152472,Kaduna,10.5105,7.4165,Onitsha,6.15,6.78,2026-02-18,30,Yam|Cassava|Potatoes
+DRV0043,Fatima Bello,09084411983,Ibadan,7.3775,3.947,Port Harcourt,4.8156,7.0498,2026-02-17,10,Cassava|Yam|Potatoes
+DRV0044,Chukwuemeka Ogunleye,09038210242,Ibadan,7.3775,3.947,Ilorin,8.4799,4.5418,2026-02-19,30,Onions|Peppers|Tomatoes
+DRV0045,Tunde Balogun,08198429450,Kano,12.0022,8.592,Onitsha,6.15,6.78,2026-02-16,15,Peppers|Onions|Tomatoes
+DRV0046,Ngozi Adeyemi,08129777514,Onitsha,6.15,6.78,Port Harcourt,4.8156,7.0498,2026-02-16,5,Sorghum|Rice
+DRV0047,Ibrahim Uba,08161536717,Kano,12.0022,8.592,Ibadan,7.3775,3.947,2026-02-19,20,Rice
+DRV0048,Ngozi Eze,07016740197,Enugu,6.4402,7.4943,Kano,12.0022,8.592,2026-02-20,10,Maize|Millet
+DRV0049,Amaka Chukwu,07092228802,Kaduna,10.5105,7.4165,Ilorin,8.4799,4.5418,2026-02-20,20,Tomatoes|Onions
+DRV0050,Bala Abiola,09079967676,Kano,12.0022,8.592,Abuja,9.0765,7.3986,2026-02-19,45,Millet|Rice

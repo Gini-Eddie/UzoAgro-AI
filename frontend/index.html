@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UzoAgro AI | The Future of Logistics</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        /* Modern Color Palette */
+        :root {
+            --dark-green: #143621;
+            --lime-green: #D4ED6D;
+            --accent-orange: #C05621;
+            --ash-black: #1A202C;
+            --shade-white: #F7FAFC;
+            --pure-white: #FFFFFF;
+            --border-color: #E2E8F0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            scroll-behavior: smooth; /* Smooth scrolling for the anchor links */
+        }
+
+        body {
+            background-color: var(--shade-white);
+            color: var(--ash-black);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            background-color: var(--dark-green);
+            color: var(--pure-white);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--lime-green);
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links a {
+            color: var(--pure-white);
+            text-decoration: none;
+            margin-left: 2rem;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--lime-green);
+        }
+
+        /* Hero Section */
+        .hero {
+            background-color: var(--dark-green);
+            color: var(--pure-white);
+            padding: 5rem 5% 6rem 5%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            max-width: 100%;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            max-width: 800px;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-bottom: 2.5rem;
+        }
+
+        .cta-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.85rem 1.75rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .btn-primary { background-color: var(--lime-green); color: var(--dark-green); }
+        .btn-primary:hover { background-color: #c4dc5a; transform: translateY(-2px); }
+
+        .btn-secondary { background-color: transparent; color: var(--pure-white); border: 2px solid var(--lime-green); }
+        .btn-secondary:hover { background-color: rgba(212, 237, 109, 0.1); }
+
+        .btn-accent { background-color: var(--accent-orange); color: var(--pure-white); }
+        .btn-accent:hover { background-color: #a0471b; transform: translateY(-2px); }
+
+        .btn-form { width: 100%; border-radius: 8px; margin-top: 1rem; }
+
+        /* Demo Section */
+        .demo-section {
+            padding: 5rem 5%;
+            background-color: var(--shade-white);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.25rem;
+            color: var(--dark-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header p {
+            color: #4A5568;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .demo-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2.5rem;
+        }
+
+        @media (max-width: 968px) {
+            .demo-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Form Styles */
+        .card {
+            background: var(--pure-white);
+            padding: 2rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+        }
+
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--dark-green); }
+        .form-group input, .form-group select {
+            width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; color: var(--ash-black); background-color: var(--shade-white);
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--lime-green); }
+
+        /* Map & Results */
+        #map {
+            height: 380px;
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            z-index: 1;
+        }
+
+        .result-card {
+            border-left: 5px solid var(--accent-orange);
+            margin-bottom: 1.25rem;
+            padding: 1.5rem;
+            background: var(--pure-white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s;
+        }
+
+        .result-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+        .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .result-header h4 { color: var(--dark-green); font-size: 1.1rem; }
+
+        .score-badge {
+            background: rgba(192, 86, 33, 0.1);
+            color: var(--accent-orange);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .driver-info p { margin-bottom: 0.5rem; color: #4A5568; font-size: 0.95rem;}
+        .driver-info strong { color: var(--dark-green); }
+
+        .locked-phone {
+            background: #EDF2F7; padding: 0.25rem 0.5rem; border-radius: 4px;
+            letter-spacing: 2px; font-family: monospace; font-weight: bold; color: #A0AEC0;
+        }
+
+        .empty-state {
+            text-align: center; padding: 3rem; color: #718096;
+            border: 2px dashed #E2E8F0; border-radius: var(--radius); background: var(--pure-white);
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">UzoAgro AI</div>
+        <div class="nav-links">
+            <a href="#">Home</a>
+            <a href="#">About Us</a>
+            <a href="#">Technology</a>
+            <a href="#" class="btn btn-primary" style="padding: 0.5rem 1.25rem; margin-left: 1rem; color: var(--dark-green);">Sign Up</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>Intelligent Logistics for the Future of Agriculture</h1>
+        <p>Eliminating empty return trips. We connect truck drivers with farmers in real-time using advanced AI route optimization to lower costs and reduce waste.</p>
+
+        <div class="cta-group">
+            <a href="#demo" class="btn btn-accent">Test the AI (Make a Request)</a>
+            <a href="#" class="btn btn-primary">Join as a Driver</a>
+            <a href="#" class="btn btn-secondary">Join as a Farmer</a>
+        </div>
+    </section>
+
+    <section id="demo" class="demo-section">
+        <div class="section-header">
+            <h2>Live Intelligence Engine</h2>
+            <p>Experience the UzoAgro Farmer Portal. Enter your cargo requirements below to instantly map and calculate the most efficient available driver.</p>
+        </div>
+
+        <div class="demo-grid">
+            <div class="card">
+                <form id="farmerForm">
+                    <div class="form-group">
+                        <label>Farmer Name</label>
+                        <input type="text" id="farmerName" placeholder="e.g. Chief Emeka" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Crop Category</label>
+                        <select id="cropType">
+                            <option value="Maize">Maize (Grains)</option>
+                            <option value="Cassava">Cassava (Tubers)</option>
+                            <option value="Yam">Yam (Tubers)</option>
+                            <option value="Tomatoes">Tomatoes (Perishables)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Required Tonnage</label>
+                        <select id="tonnage">
+                            <option value="10">10 Tons</option>
+                            <option value="15">15 Tons</option>
+                            <option value="30">30 Tons</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pickup Location</label>
+                        <select id="pickupCity">
+                            <option value="Ilorin">Ilorin (Kwara)</option>
+                            <option value="Enugu">Enugu</option>
+                            <option value="Awka">Awka</option>
+                            <option value="Lagos" selected>Lagos</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Drop-off Location</label>
+                        <select id="dropoffCity">
+                            <option value="Kaduna">Kaduna</option>
+                            <option value="Kano" selected>Kano</option>
+                            <option value="Abuja">Abuja</option>
+                            <option value="Onitsha">Onitsha</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Date</label>
+                        <input type="date" id="targetDate" required>
+                    </div>
+                    <button type="button" class="btn btn-dark-green btn-form" style="background: var(--dark-green); color: white;" onclick="submitRequest()">Find Optimal Drivers</button>
+                </form>
+            </div>
+
+            <div>
+                <div id="map"></div>
+                <div id="results-container">
+                    <div class="empty-state">
+                        Submit a cargo request to generate optimized routing and driver matches.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Set default date to today
+        document.getElementById('targetDate').valueAsDate = new Date();
+
+        // Initialize Map (Centered on Nigeria)
+        var map = L.map('map').setView([9.0820, 8.6753], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Coordinates Dictionary (Must match the Python backend)
+        const CITIES = {
+            "Lagos": [6.5244, 3.3792], "Enugu": [6.4402, 7.4943], "Awka": [6.2100, 7.0700],
+            "Onitsha": [6.1500, 6.7800], "Abuja": [9.0765, 7.3986], "Port Harcourt": [4.8156, 7.0498],
+            "Ibadan": [7.3775, 3.9470], "Kano": [12.0022, 8.5920], "Kaduna": [10.5105, 7.4165],
+            "Ilorin": [8.4799, 4.5418]
+        };
+
+        let mapLayerGroup = L.layerGroup().addTo(map);
+
+        async function submitRequest() {
+            const btn = document.querySelector('.btn-form');
+            const originalText = btn.textContent;
+            btn.textContent = "Analyzing Geospatial Routes...";
+            btn.disabled = true;
+
+            const payload = {
+                pickup_city: document.getElementById('pickupCity').value,
+                dropoff_city: document.getElementById('dropoffCity').value,
+                crop_type: document.getElementById('cropType').value,
+                required_capacity: parseFloat(document.getElementById('tonnage').value),
+                requested_date: document.getElementById('targetDate').value
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/match/custom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const matches = await response.json();
+                renderResults(matches, payload);
+                updateMap(payload.pickup_city, payload.dropoff_city);
+            } catch (error) {
+                alert("Connection Error. Ensure the UzoAgro FastAPI backend is running on port 8000.");
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function updateMap(pickup, dropoff) {
+            mapLayerGroup.clearLayers();
+            const pCoords = CITIES[pickup];
+            const dCoords = CITIES[dropoff];
+
+            // Add Markers
+            L.marker(pCoords).addTo(mapLayerGroup).bindPopup("<b>Pickup:</b> " + pickup).openPopup();
+            L.marker(dCoords).addTo(mapLayerGroup).bindPopup("<b>Dropoff:</b> " + dropoff);
+
+            // Draw Route Line
+            var latlngs = [pCoords, dCoords];
+            var polyline = L.polyline(latlngs, {color: '#C05621', weight: 4, dashArray: '10, 10'}).addTo(mapLayerGroup);
+            map.fitBounds(polyline.getBounds(), {padding: [50, 50]});
+        }
+
+        function renderResults(matches, requestData) {
+            const container = document.getElementById('results-container');
+
+            if(matches.length === 0) {
+                container.innerHTML = `<div class="empty-state" style="color:#C53030;">No available drivers matched your exact tonnage and cargo affinity.</div>`;
+                return;
+            }
+
+            container.innerHTML = `<h3 style="margin-bottom:1rem; color:var(--dark-green);">Top Matched Logistics Partners</h3>`;
+
+            matches.forEach((driver, index) => {
+                const rank = index === 0 ? '🏆 Optimal Route Match' : '✔️ Alternative Viable Route';
+
+                container.innerHTML += `
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div>
+                                <h4>${rank}</h4>
+                                <span style="font-size: 0.85rem; color: #718096;">System Driver ID: ${driver.driver_id}</span>
+                            </div>
+                            <div class="score-badge">${(driver.final_score * 100).toFixed(0)}% Match</div>
+                        </div>
+                        <div class="driver-info">
+                            <p><strong>Vector Alignment:</strong> Backhaul corridor verified</p>
+                            <p><strong>Cargo Affinity:</strong> ${requestData.crop_type} approved for this vehicle</p>
+                            <p><strong>Secure Contact:</strong> <span class="locked-phone">080X XXX XXXX</span></p>
+                        </div>
+                        <button class="btn btn-secondary" style="width:100%; color:var(--dark-green); border-color:var(--dark-green); margin-top:1rem;" onclick="alert('Demo Mode: In production, this prompts the driver with your request.')">Secure this Driver</button>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
