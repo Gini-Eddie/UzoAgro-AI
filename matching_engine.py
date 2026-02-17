@@ -163,6 +163,7 @@ def compute_scores(drivers_df, request_row):
 
     features_df = pd.DataFrame({
         "driver_id": drivers_df["driver_id"].values,
+        "driver_name": drivers_df["name"].values,
         "capacity_score": capacity_score,
         "time_score": time_score,
         "affinity_score": affinity_score,
@@ -201,6 +202,7 @@ def run_matching_engine(drivers_df, requests_df, top_k=3):
                 matches.append({
                     "request_id": req["request_id"],
                     "driver_id": row["driver_id"],
+                    "driver_name": str(row["driver_name"]),
                     "final_score": float(row["final_score"]),
                     "capacity_score": float(row["capacity_score"]),
                     "time_score": float(row["time_score"]),
