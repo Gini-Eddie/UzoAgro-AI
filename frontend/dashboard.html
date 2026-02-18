@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | UzoAgro AI</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --dark-green: #143621; --lime-green: #D4ED6D; --accent-orange: #C05621;
+            --ash-black: #1A202C; --shade-white: #F7FAFC; --pure-white: #FFFFFF;
+            --border-color: #E2E8F0; --radius: 12px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", sans-serif; }
+        body { background-color: var(--shade-white); color: var(--ash-black); display: flex; flex-direction: column; min-height: 100vh; }
+
+        /* Dashboard Navbar */
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 5%; background-color: var(--dark-green); color: var(--pure-white); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--lime-green); text-decoration: none; }
+        .user-profile { display: flex; align-items: center; gap: 1rem; }
+        .logout-btn { background: transparent; border: 1px solid var(--lime-green); color: var(--lime-green); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .logout-btn:hover { background: var(--lime-green); color: var(--dark-green); }
+
+        /* Main Dashboard Area */
+        .dashboard-container { padding: 3rem 5%; flex: 1; }
+        .welcome-header { margin-bottom: 2rem; }
+        .welcome-header h1 { color: var(--dark-green); font-size: 2rem; }
+        .welcome-header p { color: #718096; font-size: 1.1rem; }
+
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; }
+        @media (max-width: 968px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
+        /* Form & Cards */
+        .card { background: var(--pure-white); padding: 2rem; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 1.25rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--dark-green); }
+        input, select { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; background: var(--shade-white); }
+        input:focus, select:focus { outline: none; border-color: var(--lime-green); }
+
+        .btn { width: 100%; background: var(--dark-green); color: white; border: none; padding: 1rem; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
+        .btn:hover { background: var(--lime-green); color: var(--dark-green); }
+
+        /* Map & Results */
+        #map { height: 400px; border-radius: var(--radius); margin-bottom: 2rem; border: 1px solid var(--border-color); }
+        .result-card { border-left: 5px solid var(--accent-orange); margin-bottom: 1rem; padding: 1.5rem; background: var(--pure-white); border-radius: var(--radius); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .result-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
+        .score-badge { background: rgba(192, 86, 33, 0.1); color: var(--accent-orange); padding: 0.5rem 1rem; border-radius: 8px; font-weight: bold; }
+        .empty-state { text-align: center; padding: 3rem; color: #718096; border: 2px dashed var(--border-color); border-radius: var(--radius); }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="#" class="logo">🌿 UzoAgro AI</a>
+        <div class="user-profile">
+            <span id="navUserName">Loading...</span>
+            <span id="navRoleBadge" style="background: var(--lime-green); color: var(--dark-green); padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.8rem; font-weight: bold;">Role</span>
+            <button class="logout-btn" onclick="logout()">Log Out</button>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <div class="welcome-header">
+            <h1 id="welcomeMessage">Welcome to your Workspace</h1>
+            <p>Deploy logistics requests or monitor incoming routes instantly.</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3 style="margin-bottom: 1.5rem; color: var(--dark-green); border-bottom: 2px solid var(--lime-green); padding-bottom: 0.5rem; display: inline-block;">Logistics Command</h3>
+                <form id="farmerForm">
+                    <input type="hidden" id="farmerName">
+
+                    <div class="form-group">
+                        <label>Crop Category</label>
+                        <select id="cropType" onchange="updateQuantityLabel()">
+                            <option value="Maize">Grains (Maize, Rice, Beans)</option>
+                            <option value="Tomatoes">Perishables (Tomatoes, Onions)</option>
+                            <option value="Yam">Tubers (Yam)</option>
+                            <option value="Cassava">Tubers (Cassava / Garri)</option>
+                            <option value="Plantain">Tree Crops (Plantains)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label id="quantityLabel">Quantity (Number of 50kg Bags)</label>
+                        <input type="number" id="localQuantity" placeholder="e.g. 600" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Pickup Hub</label>
+                        <select id="pickupCity">
+                            <option value="Lagos" selected>Lagos</option><option value="Kano">Kano</option>
+                            <option value="Ibadan">Ibadan</option><option value="Enugu">Enugu</option>
+                            <option value="Abuja">Abuja</option><option value="Port Harcourt">Port Harcourt</option>
+                            <option value="Ilorin">Ilorin</option><option value="Jos">Jos</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Destination Hub</label>
+                        <select id="dropoffCity">
+                            <option value="Kano" selected>Kano</option><option value="Lagos">Lagos</option>
+                            <option value="Ibadan">Ibadan</option><option value="Enugu">Enugu</option>
+                            <option value="Abuja">Abuja</option><option value="Port Harcourt">Port Harcourt</option>
+                            <option value="Ilorin">Ilorin</option><option value="Jos">Jos</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Date</label>
+                        <input type="date" id="targetDate" required>
+                    </div>
+                    <button type="button" class="btn" onclick="submitRequest()">Deploy AI Matcher</button>
+                </form>
+            </div>
+
+            <div>
+                <div id="map"></div>
+                <div id="results-container">
+                    <div class="empty-state">
+                        Your optimized driver matches will appear here.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // --- SECURITY & SESSION MANAGEMENT ---
+        const sessionData = localStorage.getItem('uzoagro_user');
+
+        // If they bypass the login page, kick them out!
+        if (!sessionData) {
+            window.location.href = 'login.html';
+        }
+
+        const user = JSON.parse(sessionData);
+
+        // Populate the UI with their actual name and role
+        document.getElementById('navUserName').textContent = user.name;
+        document.getElementById('navRoleBadge').textContent = user.role.toUpperCase();
+        document.getElementById('welcomeMessage').textContent = `Welcome back, ${user.name}`;
+
+        // Auto-fill the hidden input so the database knows who made the request
+        document.getElementById('farmerName').value = user.name;
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('uzoagro_user');
+            window.location.href = '/';
+        }
+
+        // --- INTELLIGENCE ENGINE (Map & Fetch Logic) ---
+        document.getElementById('targetDate').valueAsDate = new Date();
+        var map = L.map('map').setView([9.0820, 8.6753], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        const CITIES = {
+            "Lagos": [6.5244, 3.3792], "Ibadan": [7.3775, 3.9470], "Ilorin": [8.4799, 4.5418],
+            "Abuja": [9.0765, 7.3986], "Kano": [12.0022, 8.5920], "Jos": [9.8965, 8.8583],
+            "Enugu": [6.4402, 7.4943], "Port Harcourt": [4.8156, 7.0498]
+        };
+        let mapLayerGroup = L.layerGroup().addTo(map);
+
+        // --- LOCAL MARKET CONVERSION ENGINE ---
+        function updateQuantityLabel() {
+            const crop = document.getElementById('cropType').value;
+            const label = document.getElementById('quantityLabel');
+
+            if (crop === 'Maize' || crop === 'Cassava') {
+                label.textContent = "Quantity (Number of 50kg Bags)";
+            } else if (crop === 'Tomatoes') {
+                label.textContent = "Quantity (Number of 40kg Baskets)";
+            } else if (crop === 'Yam') {
+                label.textContent = "Quantity (Number of Individual Tubers)";
+            } else if (crop === 'Plantain') {
+                label.textContent = "Quantity (Number of Bunches)";
+            }
+        }
+
+
+        async function submitRequest() {
+            const btn = document.querySelector('.btn');
+            btn.textContent = "Analyzing Vectors...";
+            btn.disabled = true;
+
+            // 1. Get the raw local input
+            const cropSelected = document.getElementById('cropType').value;
+            const rawQuantity = parseFloat(document.getElementById('localQuantity').value);
+
+            // 2. Translate local units to Metric Tons for the AI
+            let calculatedTons = 0;
+
+            if (cropSelected === 'Maize' || cropSelected === 'Cassava') {
+                // 20 bags of 50kg = 1 Ton
+                calculatedTons = rawQuantity / 20;
+            } else if (cropSelected === 'Tomatoes') {
+                // 25 baskets of 40kg = 1 Ton
+                calculatedTons = rawQuantity / 25;
+            } else if (cropSelected === 'Yam') {
+                // Assume average yam is 2.5kg. 400 tubers = 1 Ton
+                calculatedTons = rawQuantity / 400;
+            } else if (cropSelected === 'Plantain') {
+                // Assume average bunch is 10kg. 100 bunches = 1 Ton
+                calculatedTons = rawQuantity / 100;
+            }
+
+            // Prevent submission if they entered 0 or text
+            if (!calculatedTons || calculatedTons <= 0) {
+                alert("Please enter a valid quantity.");
+                btn.textContent = "Deploy AI Matcher";
+                btn.disabled = false;
+                return;
+            }
+
+            // 3. Package the standardized data for the backend
+            const payload = {
+                farmer_name: document.getElementById('farmerName').value,
+                pickup_city: document.getElementById('pickupCity').value,
+                dropoff_city: document.getElementById('dropoffCity').value,
+                crop_type: cropSelected,
+                required_capacity: calculatedTons, // The AI receives perfect Metric Tons
+                requested_date: document.getElementById('targetDate').value
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/match/custom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const matches = await response.json();
+                renderResults(matches, payload);
+                updateMap(payload.pickup_city, payload.dropoff_city);
+            } catch (error) {
+                alert("API Error.");
+            } finally {
+                btn.textContent = "Deploy AI Matcher";
+                btn.disabled = false;
+            }
+        }
+
+        function updateMap(pickup, dropoff) {
+            mapLayerGroup.clearLayers();
+            const pCoords = CITIES[pickup];
+            const dCoords = CITIES[dropoff];
+            L.marker(pCoords).addTo(mapLayerGroup).bindPopup("<b>Pickup:</b> " + pickup).openPopup();
+            L.marker(dCoords).addTo(mapLayerGroup).bindPopup("<b>Dropoff:</b> " + dropoff);
+            var polyline = L.polyline([pCoords, dCoords], {color: '#C05621', weight: 4, dashArray: '10, 10'}).addTo(mapLayerGroup);
+            map.fitBounds(polyline.getBounds(), {padding: [50, 50]});
+        }
+
+        function renderResults(matches, requestData) {
+            const container = document.getElementById('results-container');
+            if(matches.length === 0) {
+                container.innerHTML = `<div class="empty-state">No drivers matched this route vector.</div>`;
+                return;
+            }
+            container.innerHTML = ``;
+            matches.forEach((driver, index) => {
+                const rank = index === 0 ? '🏆 Optimal Match' : '✔️ Viable Route';
+                container.innerHTML += `
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div><h4>${rank}</h4><span style="font-size:0.85rem; color:#718096;">Driver: <strong>${driver.driver_name}</strong></span></div>
+                            <div class="score-badge">${(driver.final_score * 100).toFixed(0)}%</div>
+                        </div>
+                        <p style="color:#4A5568; font-size:0.9rem; margin-top:0.5rem;">Affinity: ${requestData.crop_type} approved</p>
+                        <button class="logout-btn" style="margin-top:1rem; width:100%; border-color:var(--dark-green); color:var(--dark-green);" onclick="alert('Securing driver ${driver.driver_name}...')">Secure Contract</button>
+                    </div>`;
+            });
+        }
+    </script>
+</body>
+</html>

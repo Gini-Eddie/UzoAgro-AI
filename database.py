@@ -94,6 +94,27 @@ def init_db():
                    )
                    ''')
 
+    # Create Users Table for Authentication
+    cursor.execute('''
+                   CREATE TABLE IF NOT EXISTS users
+                   (
+                       phone
+                       TEXT
+                       PRIMARY
+                       KEY,
+                       role
+                       TEXT,
+                       name
+                       TEXT,
+                       nin
+                       TEXT,
+                       password
+                       TEXT,
+                       primary_city
+                       TEXT
+                   )
+                   ''')
+
     conn.commit()
 
     # Migrate CSV data if tables are empty

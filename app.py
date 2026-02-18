@@ -4,7 +4,7 @@ import sqlite3
 import pandas as pd
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
@@ -51,6 +51,50 @@ class FarmerRequest(BaseModel):
     required_capacity: float
     requested_date: str
 
+class UserSignup(BaseModel):
+    role: str
+    name: str
+    phone: str
+    nin: str
+    primary_city: str
+
+class UserLogin(BaseModel):
+    phone: str
+    password: str
+
+@app.post("/api/signup", response_class=JSONResponse)
+def register_user(user: UserSignup):
+    """Saves a new user to the database with phone number as default password."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # We use the phone number as the default password
+        cursor.execute('''
+            INSERT INTO users (phone, role, name, nin, password, primary_city) 
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (user.phone, user.role, user.name, user.nin, user.phone, user.primary_city))
+        conn.commit()
+        return JSONResponse(content={"status": "success", "message": f"Welcome, {user.name}!"})
+    except sqlite3.IntegrityError:
+        # This triggers if the phone number (Primary Key) already exists
+        raise HTTPException(status_code=400, detail="Phone number already registered.")
+    finally:
+        conn.close()
+
+@app.post("/api/login", response_class=JSONResponse)
+def login_user(creds: UserLogin):
+    """Verifies user credentials."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name, role FROM users WHERE phone = ? AND password = ?", (creds.phone, creds.password))
+    user = cursor.fetchone()
+    conn.close()
+
+    if user:
+        return JSONResponse(content={"status": "success", "name": user["name"], "role": user["role"]})
+    else:
+        raise HTTPException(status_code=401, detail="Invalid phone number or password.")
+
 @app.post("/diagnose", response_class=JSONResponse)
 def diagnose_crop(req: DiagnosisRequest):
     """
@@ -77,9 +121,30 @@ def startup_load_data():
         raise
 
 
-@app.get("/", response_class=JSONResponse)
-def root():
-    return JSONResponse(content={"status": "UzoAgro AI API & Database running"})
+@app.get("/")
+def serve_home():
+    """Serves the main UzoAgro homepage."""
+    return FileResponse("frontend/index.html")
+
+@app.get("/signup.html")
+def serve_signup():
+    """Serves the secure onboarding page."""
+    return FileResponse("frontend/signup.html")
+
+@app.get("/login.html")
+def serve_login():
+    """Serves the user login page."""
+    return FileResponse("frontend/login.html")
+
+@app.get("/dashboard.html")
+def serve_dashboard():
+    """Serves the secure user dashboard."""
+    return FileResponse("frontend/dashboard.html")
+
+@app.get("/diagnose.html")
+def serve_diagnose():
+    """Serves the AI Botanical Diagnostics placeholder page."""
+    return FileResponse("frontend/diagnose.html")
 
 
 @app.post("/match/custom", response_class=JSONResponse)
