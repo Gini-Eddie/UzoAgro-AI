@@ -1,10 +1,12 @@
 from typing import Any, Dict, List, Optional
 import logging
-import sqlite3
+import psycopg2
+from psycopg2.errors import UniqueViolation
 import pandas as pd
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
@@ -17,6 +19,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("uzoagro-api")
 
 app = FastAPI(title="UzoAgro AI Matching API", version="0.1.0")
+app.mount("/assets", StaticFiles(directory="frontend/assets"), name="assets")
 
 app.add_middleware(
     CORSMiddleware,
@@ -71,11 +74,11 @@ def register_user(user: UserSignup):
         # We use the phone number as the default password
         cursor.execute('''
             INSERT INTO users (phone, role, name, nin, password, primary_city) 
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s)
         ''', (user.phone, user.role, user.name, user.nin, user.phone, user.primary_city))
         conn.commit()
         return JSONResponse(content={"status": "success", "message": f"Welcome, {user.name}!"})
-    except sqlite3.IntegrityError:
+    except UniqueViolation:
         # This triggers if the phone number (Primary Key) already exists
         raise HTTPException(status_code=400, detail="Phone number already registered.")
     finally:
@@ -86,7 +89,7 @@ def login_user(creds: UserLogin):
     """Verifies user credentials."""
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT name, role FROM users WHERE phone = ? AND password = ?", (creds.phone, creds.password))
+    cursor.execute("SELECT name, role FROM users WHERE phone = %s AND password = %s", (creds.phone, creds.password))
     user = cursor.fetchone()
     conn.close()
 
