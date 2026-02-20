@@ -330,7 +330,7 @@
             };
 
             try {
-                const response = await ffetch('https://gini-eddie-uzoagro-api.hf.space/match/custom', {
+                const response = await fetch('https://gini-eddie-uzoagro-api.hf.space/match/custom', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
