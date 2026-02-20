@@ -43,7 +43,7 @@
 
     <div class="auth-card">
         <div class="logo-header">
-            <a href="/">🌿 UzoAgro AI</a>
+            <a href="index.html">🌿 UzoAgro AI</a>
             <p style="color: #718096; margin-top: 0.5rem;">Join the intelligent logistics network.</p>
         </div>
 
@@ -164,21 +164,15 @@
             btn.textContent = "Processing...";
             btn.disabled = true;
 
-            // Determine if they selected Farmer or Driver
             const isFarmer = document.getElementById('btn-farmer').classList.contains('active');
             const role = isFarmer ? 'farmer' : 'driver';
-
-            // Grab the values from the inputs
             const name = document.getElementById('regName').value;
             const phone = document.getElementById('regPhone').value;
             const nin = document.getElementById('regNin').value;
-
-            // Grab the correct city depending on the role
             const primary_city = isFarmer
                 ? document.getElementById('farmerCity').value
                 : document.getElementById('driverCity').value;
 
-            // Basic validation so they don't submit empty forms
             if(!name || !phone || !nin || !primary_city) {
                 alert("Please fill out all required fields.");
                 btn.textContent = originalText;
@@ -186,7 +180,6 @@
                 return;
             }
 
-            // The data package going to FastAPI
             const payload = {
                 role: role,
                 name: name,
@@ -196,8 +189,8 @@
             };
 
             try {
-                // Send the data to your backend
-                const response = await fetch('http://127.0.0.1:8000/api/signup', {
+                // FIXED: Now connects directly to the live Hugging Face brain
+                const response = await fetch('https://gini-eddie-uzoagro-api.hf.space/api/signup', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -205,13 +198,13 @@
 
                 if (response.ok) {
                     alert('Registration Successful! Your default password is your phone number.');
-                    window.location.href = '/'; // Routes back to the homepage
+                    window.location.href = 'index.html';
                 } else {
                     const error = await response.json();
                     alert('Error: ' + error.detail);
                 }
             } catch (err) {
-                alert('Connection error to UzoAgro API. Ensure the server is running.');
+                alert('Connection error. Ensure the UzoAgro AI backend is live.');
             } finally {
                 btn.textContent = originalText;
                 btn.disabled = false;

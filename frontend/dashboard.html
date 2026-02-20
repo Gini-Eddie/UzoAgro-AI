@@ -52,7 +52,7 @@
 <body>
 
     <nav>
-        <a href="#" class="logo">🌿 UzoAgro AI</a>
+        <a href="index.html" class="logo">🌿 UzoAgro AI</a>
         <div class="user-profile">
             <span id="navUserName">Loading...</span>
             <span id="navRoleBadge" style="background: var(--lime-green); color: var(--dark-green); padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.8rem; font-weight: bold;">Role</span>
@@ -126,31 +126,24 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // --- SECURITY & SESSION MANAGEMENT ---
         const sessionData = localStorage.getItem('uzoagro_user');
 
-        // If they bypass the login page, kick them out!
         if (!sessionData) {
             window.location.href = 'login.html';
         }
 
         const user = JSON.parse(sessionData);
 
-        // Populate the UI with their actual name and role
         document.getElementById('navUserName').textContent = user.name;
         document.getElementById('navRoleBadge').textContent = user.role.toUpperCase();
         document.getElementById('welcomeMessage').textContent = `Welcome back, ${user.name}`;
-
-        // Auto-fill the hidden input so the database knows who made the request
         document.getElementById('farmerName').value = user.name;
 
-        // Logout function
         function logout() {
             localStorage.removeItem('uzoagro_user');
-            window.location.href = '/';
+            window.location.href = 'index.html';
         }
 
-        // --- INTELLIGENCE ENGINE (Map & Fetch Logic) ---
         document.getElementById('targetDate').valueAsDate = new Date();
         var map = L.map('map').setView([9.0820, 8.6753], 6);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -162,7 +155,6 @@
         };
         let mapLayerGroup = L.layerGroup().addTo(map);
 
-        // --- LOCAL MARKET CONVERSION ENGINE ---
         function updateQuantityLabel() {
             const crop = document.getElementById('cropType').value;
             const label = document.getElementById('quantityLabel');
@@ -178,34 +170,25 @@
             }
         }
 
-
         async function submitRequest() {
             const btn = document.querySelector('.btn');
             btn.textContent = "Analyzing Vectors...";
             btn.disabled = true;
 
-            // 1. Get the raw local input
             const cropSelected = document.getElementById('cropType').value;
             const rawQuantity = parseFloat(document.getElementById('localQuantity').value);
-
-            // 2. Translate local units to Metric Tons for the AI
             let calculatedTons = 0;
 
             if (cropSelected === 'Maize' || cropSelected === 'Cassava') {
-                // 20 bags of 50kg = 1 Ton
                 calculatedTons = rawQuantity / 20;
             } else if (cropSelected === 'Tomatoes') {
-                // 25 baskets of 40kg = 1 Ton
                 calculatedTons = rawQuantity / 25;
             } else if (cropSelected === 'Yam') {
-                // Assume average yam is 2.5kg. 400 tubers = 1 Ton
                 calculatedTons = rawQuantity / 400;
             } else if (cropSelected === 'Plantain') {
-                // Assume average bunch is 10kg. 100 bunches = 1 Ton
                 calculatedTons = rawQuantity / 100;
             }
 
-            // Prevent submission if they entered 0 or text
             if (!calculatedTons || calculatedTons <= 0) {
                 alert("Please enter a valid quantity.");
                 btn.textContent = "Deploy AI Matcher";
@@ -213,13 +196,12 @@
                 return;
             }
 
-            // 3. Package the standardized data for the backend
             const payload = {
                 farmer_name: document.getElementById('farmerName').value,
                 pickup_city: document.getElementById('pickupCity').value,
                 dropoff_city: document.getElementById('dropoffCity').value,
                 crop_type: cropSelected,
-                required_capacity: calculatedTons, // The AI receives perfect Metric Tons
+                required_capacity: calculatedTons,
                 requested_date: document.getElementById('targetDate').value
             };
 
@@ -230,11 +212,15 @@
                     body: JSON.stringify(payload)
                 });
 
-                const matches = await response.json();
-                renderResults(matches, payload);
-                updateMap(payload.pickup_city, payload.dropoff_city);
+                if(response.ok) {
+                    const matches = await response.json();
+                    renderResults(matches, payload);
+                    updateMap(payload.pickup_city, payload.dropoff_city);
+                } else {
+                    alert("Failed to analyze route vectors.");
+                }
             } catch (error) {
-                alert("API Error.");
+                alert("Connection Error. Ensure the UzoAgro AI backend is live.");
             } finally {
                 btn.textContent = "Deploy AI Matcher";
                 btn.disabled = false;

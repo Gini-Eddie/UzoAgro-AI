@@ -34,7 +34,7 @@
 
     <div class="auth-card">
         <div class="logo-header">
-            <a href="/">🌿 UzoAgro AI</a>
+            <a href="index.html">🌿 UzoAgro AI</a>
             <p style="color: #718096; margin-top: 0.5rem;">Secure Access Portal</p>
         </div>
 
@@ -80,7 +80,8 @@
             const payload = { phone: phone, password: password };
 
             try {
-                const response = await fetch('http://127.0.0.1:8000/api/login', {
+                // FIXED: Now connects directly to the live Hugging Face brain
+                const response = await fetch('https://gini-eddie-uzoagro-api.hf.space/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -88,21 +89,18 @@
 
                 if (response.ok) {
                     const data = await response.json();
-
-                    // Securely store the user session in the browser
                     localStorage.setItem('uzoagro_user', JSON.stringify({
                         name: data.name,
                         role: data.role,
                         phone: phone
                     }));
-
-                    window.location.href = 'dashboard.html'; // Send them to their private workspace
+                    window.location.href = 'dashboard.html';
                 } else {
                     const error = await response.json();
                     alert('Login Failed: ' + error.detail);
                 }
             } catch (err) {
-                alert('Connection error to UzoAgro API. Ensure the server is running.');
+                alert('Connection error. Ensure the UzoAgro AI backend is live.');
             } finally {
                 btn.textContent = originalText;
                 btn.disabled = false;
