@@ -15,10 +15,16 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; scroll-behavior: smooth; }
         body { background-color: var(--shade-white); color: var(--ash-black); line-height: 1.6; overflow-x: hidden; }
 
-        nav { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 5%; background-color: var(--dark-green); color: var(--pure-white); }
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 5%; background-color: var(--dark-green); color: var(--pure-white); position: relative; z-index: 100; }
         .logo { font-size: 1.5rem; font-weight: 700; color: var(--lime-green); letter-spacing: -0.5px; }
+
+        .nav-links { display: flex; align-items: center; }
         .nav-links a { color: var(--pure-white); text-decoration: none; margin-left: 2rem; font-size: 0.95rem; transition: color 0.3s; }
         .nav-links a:hover { color: var(--lime-green); }
+
+        /* Hamburger Menu Icon (Hidden on Desktop) */
+        .hamburger { display: none; background: transparent; border: none; cursor: pointer; flex-direction: column; gap: 5px; z-index: 101; padding: 0.5rem; }
+        .hamburger span { width: 25px; height: 3px; background-color: var(--lime-green); border-radius: 5px; transition: all 0.3s ease-in-out; }
 
         .hero { background-color: var(--dark-green); color: var(--pure-white); padding: 5rem 5% 6rem 5%; display: flex; flex-direction: column; align-items: flex-start; max-width: 100%; }
         .hero h1 { font-size: 3.5rem; line-height: 1.1; margin-bottom: 1.5rem; max-width: 800px; }
@@ -41,7 +47,6 @@
         .section-header p { color: #4A5568; font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
 
         .demo-grid { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 2.5rem; }
-        @media (max-width: 968px) { .demo-grid { grid-template-columns: 1fr; } }
 
         .card { background: var(--pure-white); padding: 2rem; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow-md); }
         .form-group { margin-bottom: 1.25rem; }
@@ -60,16 +65,36 @@
         .driver-info strong { color: var(--dark-green); }
 
         .empty-state { text-align: center; padding: 3rem; color: #718096; border: 2px dashed #E2E8F0; border-radius: var(--radius); background: var(--pure-white); }
+
         /* Complete Mobile Overhaul */
         @media (max-width: 968px) {
             .hero { padding: 4rem 1.5rem; }
             .hero h1 { font-size: 2.2rem; }
             .hero p { font-size: 1.1rem; }
 
-            nav { flex-direction: column; gap: 1rem; text-align: center; padding: 1rem; }
-            .nav-links { display: flex; flex-direction: column; gap: 1rem; width: 100%; }
-            .nav-links a { margin-left: 0; }
-            .btn { width: 100%; margin-bottom: 0.5rem; }
+            nav { padding: 1rem 1.5rem; }
+            .hamburger { display: flex; }
+
+            /* The Hidden Mobile Menu */
+            .nav-links {
+                position: absolute; top: 100%; left: 0; width: 100%;
+                background-color: var(--dark-green);
+                flex-direction: column; align-items: center;
+                padding: 2rem 0; gap: 1.5rem;
+                box-shadow: 0 10px 10px rgba(0,0,0,0.2);
+                display: none; /* Hidden by default */
+            }
+
+            /* Shown when hamburger is clicked */
+            .nav-links.active { display: flex; }
+
+            .nav-links a { margin-left: 0; font-size: 1.1rem; text-align: center; width: 100%; display: block; }
+            .nav-links .btn { width: 80%; margin: 0 auto; display: block; }
+
+            /* Hamburger Animation to 'X' */
+            .hamburger.active span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+            .hamburger.active span:nth-child(2) { opacity: 0; }
+            .hamburger.active span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
 
             /* Force the grids to stack beautifully */
             div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
@@ -84,14 +109,29 @@
 </head>
 <body>
 
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+
     <nav>
         <div class="logo">🌿 UzoAgro AI</div>
-        <div class="nav-links">
+
+        <button class="hamburger" id="hamburgerBtn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <div class="nav-links" id="navLinks">
             <a href="#">Home</a>
             <a href="#how-it-works">How it Works</a>
             <a href="diagnose.html" style="color: var(--lime-green); font-weight: bold;">🩺 Diagnose Crops (AI)</a>
-            <a href="login.html" style="margin-left: 1.5rem; color: var(--pure-white); font-weight: 600; text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--lime-green)'" onmouseout="this.style.color='var(--pure-white)'">Log In</a>
-            <a href="signup.html" class="btn btn-primary" style="padding: 0.5rem 1.25rem; margin-left: 1rem; color: var(--dark-green);">Sign Up</a>
+            <a href="login.html" style="color: var(--pure-white); font-weight: 600;">Log In</a>
+            <a href="signup.html" class="btn btn-primary" style="padding: 0.5rem 1.25rem; color: var(--dark-green);">Sign Up</a>
         </div>
     </nav>
 
@@ -214,6 +254,15 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // Hamburger Menu Logic
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const navLinks = document.getElementById('navLinks');
+
+        hamburgerBtn.addEventListener('click', () => {
+            hamburgerBtn.classList.toggle('active');
+            navLinks.classList.toggle('active');
+        });
+
         document.getElementById('targetDate').valueAsDate = new Date();
         var map = L.map('map').setView([9.0820, 8.6753], 6);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
