@@ -6,23 +6,105 @@
     <title>AI Crop Diagnostics | UzoAgro</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
     <style>
-        :root { --dark-green: #143621; --lime-green: #D4ED6D; --shade-white: #F7FAFC; }
-        body { font-family: "Segoe UI", sans-serif; background: var(--shade-white); color: #1A202C; text-align: center; padding: 5rem 2rem; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 3rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        h1 { color: var(--dark-green); }
-        .icon { font-size: 4rem; margin-bottom: 1rem; }
-        .btn { display: inline-block; background: var(--dark-green); color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 8px; margin-top: 2rem; font-weight: bold; }
+        :root { --dark-green: #143621; --lime-green: #D4ED6D; --shade-white: #F7FAFC; --pure-white: #FFFFFF; --border-color: #E2E8F0; }
+        body { font-family: "Segoe UI", sans-serif; background: var(--shade-white); color: #1A202C; text-align: center; padding: 3rem 1rem; margin: 0; }
+        .container { max-width: 600px; margin: 0 auto; background: var(--pure-white); padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+        h1 { color: var(--dark-green); margin-bottom: 0.5rem; }
+
+        .upload-area { border: 2px dashed var(--dark-green); padding: 2rem; border-radius: 12px; background: rgba(212, 237, 109, 0.1); margin: 2rem 0; cursor: pointer; transition: 0.3s; }
+        .upload-area:hover { background: rgba(212, 237, 109, 0.3); }
+        input[type="file"] { display: none; }
+
+        #imagePreview { max-width: 100%; max-height: 300px; border-radius: 8px; display: none; margin: 1rem auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        .btn { width: 100%; display: block; background: var(--dark-green); color: white; padding: 1rem; border: none; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.3s; margin-top: 1rem; }
         .btn:hover { background: var(--lime-green); color: var(--dark-green); }
+        .btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+
+        .result-card { text-align: left; background: var(--shade-white); padding: 1.5rem; border-radius: 8px; border-left: 5px solid var(--dark-green); margin-top: 2rem; display: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="icon">🩺🌿</div>
+        <a href="index.html" style="text-decoration: none; font-size: 1.5rem; font-weight: 700; color: var(--lime-green); display: block; margin-bottom: 1rem;">🌿 UzoAgro AI</a>
+        <div style="font-size: 4rem; margin-bottom: 0.5rem;">🩺🌿</div>
         <h1>AI Botanical Diagnostics</h1>
-        <p style="color: #718096; font-size: 1.1rem; margin-top: 1rem;">
-            This module is currently being integrated by our AI Engineering team. Soon, you will be able to describe your crop's symptoms and receive instant, natural herbal remedies.
-        </p>
-        <a href="index.html" class="btn">Return to Logistics Hub</a>
+        <p style="color: #718096;">Upload or snap a photo of a diseased crop leaf. Our AI will analyze the symptoms and recommend indigenous herbal remedies.</p>
+
+        <label class="upload-area">
+            <input type="file" id="cropImage" accept="image/*" capture="environment" onchange="previewImage(event)">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📸</div>
+            <strong style="color: var(--dark-green);">Tap to Open Camera or Select Image</strong>
+        </label>
+
+        <img id="imagePreview" alt="Crop Preview">
+
+        <button id="analyzeBtn" class="btn" onclick="submitImage()" disabled>Analyze Crop Data</button>
+
+        <div id="results" class="result-card">
+            <h3 style="color: var(--dark-green); margin-top: 0;">Diagnosis Complete</h3>
+            <p><strong>Detected Pathology:</strong> <span id="resDisease" style="color: #C53030; font-weight: bold;"></span></p>
+            <p><strong>AI Confidence:</strong> <span id="resConfidence"></span></p>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 1rem 0;">
+            <p><strong>Recommended Indigenous Remedy:</strong></p>
+            <p id="resRemedy" style="color: #4A5568; line-height: 1.5;"></p>
+        </div>
     </div>
+
+    <script>
+        // Shows the image on screen before sending
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('imagePreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('analyzeBtn').disabled = false;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function submitImage() {
+            const fileInput = document.getElementById('cropImage');
+            const file = fileInput.files[0];
+            const btn = document.getElementById('analyzeBtn');
+
+            if (!file) return;
+
+            btn.textContent = "Running Neural Network...";
+            btn.disabled = true;
+
+            // We use FormData to package the raw image file for the internet
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch('https://gini-eddie-uzoagro-api.hf.space/api/diagnose/image', {
+                    method: 'POST',
+                    body: formData // Note: We do NOT set 'Content-Type' when sending FormData, the browser handles it automatically!
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Display the results
+                    document.getElementById('resDisease').textContent = data.detected_disease;
+                    document.getElementById('resConfidence').textContent = data.confidence_score;
+                    document.getElementById('resRemedy').textContent = data.traditional_remedy;
+                    document.getElementById('results').style.display = 'block';
+                } else {
+                    alert("AI Analysis Failed.");
+                }
+            } catch (err) {
+                alert("Connection Error to UzoAgro Cloud.");
+            } finally {
+                btn.textContent = "Analyze Another Crop";
+                btn.disabled = false;
+            }
+        }
+    </script>
 </body>
 </html>

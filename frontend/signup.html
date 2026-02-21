@@ -12,31 +12,35 @@
             --border-color: #E2E8F0; --radius: 12px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", sans-serif; }
-        body { background-color: var(--shade-white); color: var(--ash-black); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 2rem; }
+        body { background-color: var(--shade-white); color: var(--ash-black); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 2rem 1rem; }
 
         .auth-card { background: var(--pure-white); padding: 3rem; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: 0 10px 15px rgba(0,0,0,0.05); width: 100%; max-width: 650px; }
         .logo-header { text-align: center; margin-bottom: 2rem; }
         .logo-header a { color: var(--dark-green); font-size: 2rem; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; font-weight: 700; }
-        .logo-header a:hover { color: var(--accent-orange); }
 
-        /* Toggle Switch */
         .role-toggle { display: flex; background: var(--shade-white); border-radius: 50px; padding: 0.5rem; margin-bottom: 2rem; border: 1px solid var(--border-color); }
-        .role-btn { flex: 1; padding: 0.85rem; text-align: center; border-radius: 50px; cursor: pointer; font-weight: bold; transition: 0.3s; color: var(--ash-black); }
+        .role-btn { flex: 1; padding: 0.85rem; text-align: center; border-radius: 50px; cursor: pointer; font-weight: bold; transition: 0.3s; color: var(--ash-black); font-size: 0.95rem; }
         .role-btn.active { background: var(--dark-green); color: var(--pure-white); }
 
-        /* Form Inputs */
         .form-group { margin-bottom: 1.25rem; }
+        .flex-group { display: flex; gap: 1rem; }
         label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.95rem; color: var(--dark-green); }
-        input, select { width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; background: var(--shade-white); transition: border 0.3s; color: var(--ash-black); }
+        input, select { width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; background: var(--shade-white); color: var(--ash-black); }
         input:focus, select:focus { outline: none; border-color: var(--lime-green); }
 
         .security-badge { font-size: 0.8rem; color: #718096; display: flex; align-items: center; gap: 5px; margin-top: 0.5rem; }
-
         .btn { width: 100%; background: var(--dark-green); color: white; border: none; padding: 1rem; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 1rem; transition: 0.3s; }
         .btn:hover { background: var(--lime-green); color: var(--dark-green); }
 
-        /* Hide Driver fields by default */
         .driver-fields { display: none; }
+
+        /* Mobile Fixes */
+        @media (max-width: 600px) {
+            .auth-card { padding: 2rem 1.5rem; }
+            .flex-group { flex-direction: column; gap: 1.25rem; }
+            .role-toggle { flex-direction: column; border-radius: 12px; }
+            .role-btn { border-radius: 8px; }
+        }
     </style>
 </head>
 <body>
@@ -58,7 +62,7 @@
                 <input type="text" id="regName" placeholder="Enter your full name" required>
             </div>
 
-            <div class="form-group" style="display: flex; gap: 1rem;">
+            <div class="form-group flex-group">
                 <div style="flex: 1;">
                     <label>Phone Number</label>
                     <input type="tel" id="regPhone" placeholder="080XXXXXXXX" required>
@@ -92,42 +96,31 @@
                         <option>Tubers (Yam, Cassava)</option>
                         <option>Perishables (Tomatoes, Onions)</option>
                     </select>
-                    <span class="security-badge">Helps AI match you with compatible trucks faster.</span>
                 </div>
             </div>
 
             <div class="driver-fields">
-                <div class="form-group">
-                    <label>Vehicle License Plate</label>
-                    <input type="text" id="driverLicense" placeholder="e.g. KAN-123-XA">
-                </div>
-                <div class="form-group" style="display: flex; gap: 1rem;">
+                <div class="form-group flex-group">
                     <div style="flex: 1;">
                         <label>Home Base (Return City)</label>
                         <select id="driverCity">
                             <option value="" disabled selected>Select base...</option>
-                            <option value="Lagos">Lagos</option><option value="Ibadan">Ibadan</option>
-                            <option value="Ilorin">Ilorin</option><option value="Akure">Akure</option>
-                            <option value="Abuja">Abuja</option><option value="Kano">Kano</option>
-                            <option value="Kaduna">Kaduna</option><option value="Jos">Jos</option>
-                            <option value="Sokoto">Sokoto</option><option value="Enugu">Enugu</option>
-                            <option value="Awka">Awka</option><option value="Onitsha">Onitsha</option>
-                            <option value="Owerri">Owerri</option><option value="Port Harcourt">Port Harcourt</option>
-                            <option value="Uyo">Uyo</option>
+                            <option value="Lagos">Lagos</option><option value="Kano">Kano</option>
+                            <option value="Abuja">Abuja</option><option value="Port Harcourt">Port Harcourt</option>
+                            <option value="Enugu">Enugu</option><option value="Ibadan">Ibadan</option>
                         </select>
                     </div>
                     <div style="flex: 1;">
                         <label>Truck Tonnage</label>
                         <select id="driverCapacity">
                             <option>5 Tons</option><option>10 Tons</option><option>15 Tons</option>
-                            <option>20 Tons</option><option>30 Tons</option><option>45 Tons</option>
+                            <option>30 Tons</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Crops Permitted in Truck</label>
                     <input type="text" id="driverAllowedCrops" placeholder="e.g. Maize, Yam, Beans">
-                    <span class="security-badge">Prevents spoilage by ensuring strict cargo affinity.</span>
                 </div>
             </div>
 
@@ -146,15 +139,11 @@
             const driverFields = document.querySelector('.driver-fields');
 
             if (role === 'farmer') {
-                btnFarmer.classList.add('active');
-                btnDriver.classList.remove('active');
-                farmerFields.style.display = 'block';
-                driverFields.style.display = 'none';
+                btnFarmer.classList.add('active'); btnDriver.classList.remove('active');
+                farmerFields.style.display = 'block'; driverFields.style.display = 'none';
             } else {
-                btnDriver.classList.add('active');
-                btnFarmer.classList.remove('active');
-                driverFields.style.display = 'block';
-                farmerFields.style.display = 'none';
+                btnDriver.classList.add('active'); btnFarmer.classList.remove('active');
+                driverFields.style.display = 'block'; farmerFields.style.display = 'none';
             }
         }
 
@@ -169,27 +158,17 @@
             const name = document.getElementById('regName').value;
             const phone = document.getElementById('regPhone').value;
             const nin = document.getElementById('regNin').value;
-            const primary_city = isFarmer
-                ? document.getElementById('farmerCity').value
-                : document.getElementById('driverCity').value;
+            const primary_city = isFarmer ? document.getElementById('farmerCity').value : document.getElementById('driverCity').value;
 
             if(!name || !phone || !nin || !primary_city) {
                 alert("Please fill out all required fields.");
-                btn.textContent = originalText;
-                btn.disabled = false;
+                btn.textContent = originalText; btn.disabled = false;
                 return;
             }
 
-            const payload = {
-                role: role,
-                name: name,
-                phone: phone,
-                nin: nin,
-                primary_city: primary_city
-            };
+            const payload = { role, name, phone, nin, primary_city };
 
             try {
-                // FIXED: Now connects directly to the live Hugging Face brain
                 const response = await fetch('https://gini-eddie-uzoagro-api.hf.space/api/signup', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -197,8 +176,13 @@
                 });
 
                 if (response.ok) {
-                    alert('Registration Successful! Your default password is your phone number.');
-                    window.location.href = 'index.html';
+                    // CRITICAL UX FIX: Instantly log them in and send them to the dashboard
+                    localStorage.setItem('uzoagro_user', JSON.stringify({
+                        name: name,
+                        role: role,
+                        phone: phone
+                    }));
+                    window.location.href = 'dashboard.html';
                 } else {
                     const error = await response.json();
                     alert('Error: ' + error.detail);
@@ -206,8 +190,7 @@
             } catch (err) {
                 alert('Connection error. Ensure the UzoAgro AI backend is live.');
             } finally {
-                btn.textContent = originalText;
-                btn.disabled = false;
+                btn.textContent = originalText; btn.disabled = false;
             }
         }
     </script>

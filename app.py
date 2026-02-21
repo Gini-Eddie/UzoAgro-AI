@@ -3,7 +3,7 @@ import psycopg2
 from psycopg2.errors import UniqueViolation
 import pandas as pd
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
@@ -12,6 +12,7 @@ from pydantic import BaseModel
 # Import our new database manager and the matching engine
 from database import get_db_connection, init_db
 from matching_engine import run_matching_engine
+from diagnostics_engine import run_botanical_diagnosis
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("uzoagro-api")
@@ -127,16 +128,20 @@ def login_user(creds: UserLogin):
         raise HTTPException(status_code=401, detail="Invalid phone number or password.")
 
 
-@app.post("/diagnose", response_class=JSONResponse)
-def diagnose_crop(req: DiagnosisRequest):
-    """Endpoint for the AI Botanical Diagnostics feature."""
-    return JSONResponse(content={
-        "status": "success",
-        "crop_analyzed": req.crop_type,
-        "symptoms_received": req.symptoms,
-        "ai_diagnosis": "Analysis pending...",
-        "herbal_remedy": "Natural botanical solution will populate here."
-    })
+@app.post("/api/diagnose/image", response_class=JSONResponse)
+async def analyze_crop_image(file: UploadFile = File(...)):
+    """Receives a crop image from the frontend and passes it to the AI."""
+    try:
+        # Read the image file into memory
+        image_bytes = await file.read()
+
+        # Pass the raw image to your friend's wrapper
+        results = run_botanical_diagnosis(image_bytes)
+
+        return JSONResponse(content=results)
+    except Exception as e:
+        logger.exception("Failed to process uploaded image.")
+        raise HTTPException(status_code=500, detail="Image processing failed.")
 
 
 @app.post("/match/custom", response_class=JSONResponse)
@@ -167,8 +172,29 @@ def match_custom_request(req: FarmerRequest):
                    ))
     conn.commit()
 
-    # 2. Pull all available drivers dynamically from the database
-    drivers_df = pd.read_sql("SELECT * FROM drivers", conn, parse_dates=["available_date"])
+    # 2. Safely pull drivers OR inject live demo data if DB is empty
+    cursor.execute("SELECT * FROM drivers")
+    rows = cursor.fetchall()
+
+    if not rows:
+        # EMERGENCY DEMO DATA: Guarantees your pitch works perfectly on stage!
+        drivers_df = pd.DataFrame([
+            {"driver_id": "DRV-001", "driver_name": "Oluwaseun Logistics", "phone": "080111", "current_city": "Lagos",
+             "current_lat": 6.5244, "current_lon": 3.3792, "home_base": "Kano", "capacity": 30.0,
+             "allowed_crops": "Maize, Yam", "available_date": pd.Timestamp.now()},
+            {"driver_id": "DRV-002", "driver_name": "Northern Freight", "phone": "080222", "current_city": "Ibadan",
+             "current_lat": 7.3775, "current_lon": 3.9470, "home_base": "Kano", "capacity": 15.0,
+             "allowed_crops": "Maize, Tomatoes", "available_date": pd.Timestamp.now()},
+            {"driver_id": "DRV-003", "driver_name": "Emeka Transports", "phone": "080333", "current_city": "Abuja",
+             "current_lat": 9.0765, "current_lon": 7.3986, "home_base": "Lagos", "capacity": 20.0,
+             "allowed_crops": "Yam, Cassava", "available_date": pd.Timestamp.now()}
+        ])
+    else:
+        # The bulletproof way to read PostgreSQL into Pandas without SQLAlchemy
+        colnames = [desc[0] for desc in cursor.description]
+        drivers_df = pd.DataFrame(rows, columns=colnames)
+        drivers_df["available_date"] = pd.to_datetime(drivers_df["available_date"])
+
     conn.close()
 
     # 3. Create a DataFrame for this specific request to feed the AI Engine
