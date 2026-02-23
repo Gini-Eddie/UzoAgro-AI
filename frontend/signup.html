@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up | UzoAgro AI</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
+    <script src="https://js.paystack.co/v2/inline.js"defer></script>
     <style>
         :root {
             --dark-green: #143621; --lime-green: #D4ED6D; --accent-orange: #C05621;
@@ -150,7 +151,7 @@
         async function submitSignup() {
             const btn = document.querySelector('.btn');
             const originalText = btn.textContent;
-            btn.textContent = "Processing...";
+            btn.textContent = "Initializing Payment...";
             btn.disabled = true;
 
             const isFarmer = document.getElementById('btn-farmer').classList.contains('active');
@@ -162,36 +163,68 @@
 
             if(!name || !phone || !nin || !primary_city) {
                 alert("Please fill out all required fields.");
-                btn.textContent = originalText; btn.disabled = false;
+                btn.textContent = originalText;
+                btn.disabled = false;
                 return;
             }
 
-            const payload = { role, name, phone, nin, primary_city };
+            // Paystack requires an email address for receipts. We generate a placeholder using their phone.
+            const generatedEmail = `${phone}@uzoagro.com`;
 
-            try {
-                const response = await fetch('https://gini-eddie-uzoagro-api.hf.space/api/signup', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+            // 1. Launch the Paystack Secure Checkout
+            const paystack = new PaystackPop();
+            paystack.newTransaction({
+                key: 'pk_test_93809a62e1533cc2c7e8b85a8b53494196b63992', // <-- PASTE YOUR PAYSTACK TEST PUBLIC KEY HERE
+                email: generatedEmail,
+                amount: 1000 * 100, // ₦1,000 in Kobo (Paystack requires the lowest currency unit)
+                currency: 'NGN',
+                onSuccess: async (transaction) => {
+                    // 2. PAYMENT SUCCESSFUL! Now we send the data AND the reference receipt to your backend
+                    btn.textContent = "Verifying & Creating Account...";
 
-                if (response.ok) {
-                    // CRITICAL UX FIX: Instantly log them in and send them to the dashboard
-                    localStorage.setItem('uzoagro_user', JSON.stringify({
-                        name: name,
+                    const payload = {
                         role: role,
-                        phone: phone
-                    }));
-                    window.location.href = 'dashboard.html';
-                } else {
-                    const error = await response.json();
-                    alert('Error: ' + error.detail);
+                        name: name,
+                        phone: phone,
+                        nin: nin,
+                        primary_city: primary_city,
+                        reference: transaction.reference // <-- The crucial receipt for your Python backend
+                    };
+
+                    try {
+                        const response = await fetch('https://gini-eddie-uzoagro-api.hf.space/api/signup', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (response.ok) {
+                            // Success! Log them in and route directly to the dashboard
+                            localStorage.setItem('uzoagro_user', JSON.stringify({
+                                name: name,
+                                role: role,
+                                phone: phone
+                            }));
+                            window.location.href = 'dashboard.html';
+                        } else {
+                            const error = await response.json();
+                            alert('Error creating account: ' + error.detail);
+                            btn.textContent = originalText;
+                            btn.disabled = false;
+                        }
+                    } catch (err) {
+                        alert('Connection error to UzoAgro Cloud.');
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }
+                },
+                onCancel: () => {
+                    // 3. User closed the payment window without paying
+                    alert("Payment cancelled. Account creation aborted.");
+                    btn.textContent = originalText;
+                    btn.disabled = false;
                 }
-            } catch (err) {
-                alert('Connection error. Ensure the UzoAgro AI backend is live.');
-            } finally {
-                btn.textContent = originalText; btn.disabled = false;
-            }
+            });
         }
     </script>
 </body>

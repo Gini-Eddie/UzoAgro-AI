@@ -2,6 +2,9 @@ import logging
 import psycopg2
 from psycopg2.errors import UniqueViolation
 import pandas as pd
+import requests
+import os
+from dotenv import load_dotenv
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import JSONResponse
@@ -16,6 +19,27 @@ from diagnostics_engine import run_botanical_diagnosis
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("uzoagro-api")
+
+load_dotenv()
+PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY")
+
+def verify_paystack_payment(reference: str) -> bool:
+    """Securely asks Paystack if the transaction was actually successful."""
+    url = f"https://api.paystack.co/transaction/verify/{reference}"
+    headers = {
+        "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}"
+    }
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            # Double-check that the transaction status is literally "success"
+            if data.get("data", {}).get("status") == "success":
+                return True
+    except Exception as e:
+        print(f"Paystack verification error: {e}")
+
+    return False
 
 app = FastAPI(title="UzoAgro AI Matching API", version="0.1.0")
 
@@ -88,23 +112,51 @@ def read_root():
     return {"message": "UzoAgro API is running smoothly!"}
 
 
-@app.post("/api/signup", response_class=JSONResponse)
-def register_user(user: UserSignup):
-    """Saves a new user to the database with phone number as default password."""
+@app.post("/api/signup")
+async def create_user(user_data: dict):
+    # 1. Grab the exact payment receipt (reference) sent from your frontend JavaScript
+    reference = user_data.get("reference")
+
+    # 2. THE BOUNCER: If there is no receipt, or Paystack says the receipt is fake, block them!
+    if not reference or not verify_paystack_payment(reference):
+        raise HTTPException(status_code=400, detail="Secure payment verification failed. Account creation blocked.")
+
+    role = user_data.get("role")
+    name = user_data.get("name")
+    phone = user_data.get("phone")
+    nin = user_data.get("nin")
+    primary_city = user_data.get("primary_city")
+
     conn = get_db_connection()
     cursor = conn.cursor()
+
     try:
-        # PostgreSQL syntax strictly uses %s
-        cursor.execute('''
-                       INSERT INTO users (phone, role, name, nin, password, primary_city)
-                       VALUES (%s, %s, %s, %s, %s, %s)
-                       ''', (user.phone, user.role, user.name, user.nin, user.phone, user.primary_city))
+        # Check if the user already exists to prevent duplicates
+        cursor.execute("SELECT phone FROM users WHERE phone = %s", (phone,))
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="User with this phone number already exists.")
+
+        cursor.execute(
+            "INSERT INTO users (role, name, phone, nin, primary_city) VALUES (%s, %s, %s, %s, %s)",
+            (role, name, phone, nin, primary_city)
+        )
+
+        if role == "driver":
+            cursor.execute(
+                """INSERT INTO drivers (driver_id, driver_name, phone, current_city, current_lat, current_lon,
+                                        home_base, capacity, allowed_crops)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                (f"DRV-{phone[-4:]}", name, phone, primary_city, 0.0, 0.0, primary_city, 15.0, "All")
+            )
+
         conn.commit()
-        return JSONResponse(content={"status": "success", "message": f"Welcome, {user.name}!"})
-    except UniqueViolation:
-        # This triggers if the phone number (Primary Key) already exists
-        raise HTTPException(status_code=400, detail="Phone number already registered.")
+        return {"status": "success", "message": "Payment verified and account created successfully."}
+
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
+        cursor.close()
         conn.close()
 
 
