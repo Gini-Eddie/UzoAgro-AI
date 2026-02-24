@@ -82,7 +82,7 @@
             formData.append("file", file);
 
             try {
-                const response = await fetch('https://gini-eddie-uzoagro-api.hf.space/api/diagnose/image', {
+                const response = await fetch('https://uzoagroai-uzoagro-api.hf.space/api/diagnose/image', {
                     method: 'POST',
                     body: formData // Note: We do NOT set 'Content-Type' when sending FormData, the browser handles it automatically!
                 });

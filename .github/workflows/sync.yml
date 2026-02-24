@@ -14,4 +14,4 @@ jobs:
       - name: Push to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push --force https://Gini-Eddie:$HF_TOKEN@huggingface.co/spaces/Gini-Eddie/uzoagro-api main
+        run: git push --force https://UzoAgroAI:$HF_TOKEN@huggingface.co/spaces/UzoAgroAI/uzoagro-api main
