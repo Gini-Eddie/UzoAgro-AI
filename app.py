@@ -5,8 +5,11 @@ import pandas as pd
 import requests
 import os
 from dotenv import load_dotenv
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
@@ -112,53 +115,111 @@ def read_root():
     return {"message": "UzoAgro API is running smoothly!"}
 
 
+# ... (keep your existing imports and database connection setup) ...
+
+# 1. THE MOCK KYC FUNCTION (Place this above your routes)
+def verify_identity_mock(nin: str, name: str) -> bool:
+    """
+    Simulates a call to Prembly/Dojah.
+    In the future, we replace this logic with the real API request.
+    """
+    # Simulate a small delay like a real server
+    import time
+    time.sleep(1)
+
+    # Simple validation rule for testing:
+    # If the NIN is exactly 11 digits, we assume it's valid.
+    if len(nin) == 11 and nin.isdigit():
+        return True
+    return False
+
+
+def send_welcome_email(user_email: str, user_name: str, role: str):
+    """
+    Sends a welcome email via SMTP.
+    Skips execution if credentials are missing or email is invalid.
+    """
+    sender_email = os.getenv("EMAIL_SENDER")
+    sender_password = os.getenv("EMAIL_PASSWORD")
+
+    if not sender_email or not sender_password or not user_email:
+        return
+
+    msg = MIMEMultipart()
+    msg['From'] = f"UzoAgro AI <{sender_email}>"
+    msg['To'] = user_email
+    msg['Subject'] = "Welcome to UzoAgro AI! 🌿"
+
+    html_content = f"""
+    <html>
+        <body style="font-family: Arial, sans-serif; color: #143621;">
+            <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+                <h2>Welcome, {user_name}!</h2>
+                <p>You have successfully registered as a <strong>{role.capitalize()}</strong>.</p>
+                <a href="https://uzoagro-ai.vercel.app/login.html" 
+                   style="background-color: #D4ED6D; color: #143621; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+                   Go to Dashboard
+                </a>
+            </div>
+        </body>
+    </html>
+    """
+    msg.attach(MIMEText(html_content, 'html'))
+
+
 @app.post("/api/signup")
 async def create_user(user_data: dict):
-    # 1. Grab the exact payment receipt (reference) sent from your frontend JavaScript
-    reference = user_data.get("reference")
+    async def create_user(user_data: dict, background_tasks: BackgroundTasks):
+        """
+        Creates a user account and triggers a background email task if an email is provided.
+        """
+        # ... (Include your Paystack verification logic here) ...
 
-    # 2. THE BOUNCER: If there is no receipt, or Paystack says the receipt is fake, block them!
-    if not reference or not verify_paystack_payment(reference):
-        raise HTTPException(status_code=400, detail="Secure payment verification failed. Account creation blocked.")
+        role = user_data.get("role")
+        name = user_data.get("name")
+        phone = user_data.get("phone")
+        nin = user_data.get("nin")
+        primary_city = user_data.get("primary_city")
+        email = user_data.get("email")  # Returns None if they didn't type it
 
-    role = user_data.get("role")
-    name = user_data.get("name")
-    phone = user_data.get("phone")
-    nin = user_data.get("nin")
-    primary_city = user_data.get("primary_city")
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
+        try:
+            # Check for duplicates
+            cursor.execute("SELECT phone FROM users WHERE phone = %s", (phone,))
+            if cursor.fetchone():
+                raise HTTPException(status_code=400, detail="Phone number already registered.")
 
-    try:
-        # Check if the user already exists to prevent duplicates
-        cursor.execute("SELECT phone FROM users WHERE phone = %s", (phone,))
-        if cursor.fetchone():
-            raise HTTPException(status_code=400, detail="User with this phone number already exists.")
-
-        cursor.execute(
-            "INSERT INTO users (role, name, phone, nin, primary_city) VALUES (%s, %s, %s, %s, %s)",
-            (role, name, phone, nin, primary_city)
-        )
-
-        if role == "driver":
+            # Insert user (handling optional email)
             cursor.execute(
-                """INSERT INTO drivers (driver_id, driver_name, phone, current_city, current_lat, current_lon,
-                                        home_base, capacity, allowed_crops)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                (f"DRV-{phone[-4:]}", name, phone, primary_city, 0.0, 0.0, primary_city, 15.0, "All")
+                "INSERT INTO users (role, name, phone, nin, primary_city, email) VALUES (%s, %s, %s, %s, %s, %s)",
+                (role, name, phone, nin, primary_city, email)
             )
 
-        conn.commit()
-        return {"status": "success", "message": "Payment verified and account created successfully."}
+            # Insert driver logic if applicable
+            if role == "driver":
+                cursor.execute(
+                    """INSERT INTO drivers (driver_id, driver_name, phone, current_city, home_base, capacity,
+                                            allowed_crops)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                    (f"DRV-{phone[-4:]}", name, phone, primary_city, primary_city, 15.0, "All")
+                )
 
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
+            conn.commit()
 
+            # Only queue the email task if they actually provided an email
+            if email and "@" in email:
+                background_tasks.add_task(send_welcome_email, email, name, role)
+
+            return {"status": "success", "message": "Account created successfully."}
+
+        except Exception as e:
+            conn.rollback()
+            raise HTTPException(status_code=500, detail=str(e))
+        finally:
+            cursor.close()
+            conn.close()
 
 @app.post("/api/login", response_class=JSONResponse)
 def login_user(creds: UserLogin):

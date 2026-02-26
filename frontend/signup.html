@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up | UzoAgro AI</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
-    <script src="https://js.paystack.co/v2/inline.js"defer></script>
+    <script src="https://js.paystack.co/v2/inline.js" defer></script>
     <style>
         :root {
             --dark-green: #143621; --lime-green: #D4ED6D; --accent-orange: #C05621;
@@ -35,7 +35,6 @@
 
         .driver-fields { display: none; }
 
-        /* Mobile Fixes */
         @media (max-width: 600px) {
             .auth-card { padding: 2rem 1.5rem; }
             .flex-group { flex-direction: column; gap: 1.25rem; }
@@ -61,6 +60,11 @@
             <div class="form-group">
                 <label>Full Name / Farm Name</label>
                 <input type="text" id="regName" placeholder="Enter your full name" required>
+            </div>
+
+            <div class="form-group">
+                <label>Email Address (Optional)</label>
+                <input type="email" id="regEmail" placeholder="you@example.com">
             </div>
 
             <div class="form-group flex-group">
@@ -157,6 +161,7 @@
             const isFarmer = document.getElementById('btn-farmer').classList.contains('active');
             const role = isFarmer ? 'farmer' : 'driver';
             const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
             const phone = document.getElementById('regPhone').value;
             const nin = document.getElementById('regNin').value;
             const primary_city = isFarmer ? document.getElementById('farmerCity').value : document.getElementById('driverCity').value;
@@ -168,27 +173,25 @@
                 return;
             }
 
-            // Paystack requires an email address for receipts. We generate a placeholder using their phone.
-            const generatedEmail = `${phone}@uzoagro.com`;
+            const transactionEmail = email ? email : `${phone}@uzoagro.com`;
 
-            // 1. Launch the Paystack Secure Checkout
             const paystack = new PaystackPop();
             paystack.newTransaction({
-                key: 'pk_test_93809a62e1533cc2c7e8b85a8b53494196b63992', // <-- PASTE YOUR PAYSTACK TEST PUBLIC KEY HERE
-                email: generatedEmail,
-                amount: 1000 * 100, // ₦1,000 in Kobo (Paystack requires the lowest currency unit)
+                key: 'pk_test_93809a62e1533cc2c7e8b85a8b53494196b63992',
+                email: transactionEmail,
+                amount: 1000 * 100,
                 currency: 'NGN',
                 onSuccess: async (transaction) => {
-                    // 2. PAYMENT SUCCESSFUL! Now we send the data AND the reference receipt to your backend
                     btn.textContent = "Verifying & Creating Account...";
 
                     const payload = {
                         role: role,
                         name: name,
+                        email: email,
                         phone: phone,
                         nin: nin,
                         primary_city: primary_city,
-                        reference: transaction.reference // <-- The crucial receipt for your Python backend
+                        reference: transaction.reference
                     };
 
                     try {
@@ -199,7 +202,6 @@
                         });
 
                         if (response.ok) {
-                            // Success! Log them in and route directly to the dashboard
                             localStorage.setItem('uzoagro_user', JSON.stringify({
                                 name: name,
                                 role: role,
@@ -219,7 +221,6 @@
                     }
                 },
                 onCancel: () => {
-                    // 3. User closed the payment window without paying
                     alert("Payment cancelled. Account creation aborted.");
                     btn.textContent = originalText;
                     btn.disabled = false;
