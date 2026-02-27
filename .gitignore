@@ -1,9 +1,9 @@
-# Environments
 .env
+
+# Environments
 .venv/
 env/
 venv/
-.env
 
 # Python Cache
 __pycache__/
