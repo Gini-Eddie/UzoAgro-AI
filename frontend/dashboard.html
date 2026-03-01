@@ -2,167 +2,269 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | UzoAgro AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UzoAgro AI | Dashboard</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
             --dark-green: #143621; --lime-green: #D4ED6D; --accent-orange: #C05621;
-            --ash-black: #1A202C; --shade-white: #F3F4F6; --pure-white: #FFFFFF;
-            --border-color: #E5E7EB; --radius: 12px;
+            --ash-black: #1A202C; --bg-gray: #F4F7F6; --pure-white: #FFFFFF;
+            --border-color: #E2E8F0;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", sans-serif; }
-        body { background-color: var(--shade-white); color: var(--ash-black); display: flex; min-height: 100vh; flex-direction: column; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-gray); color: var(--ash-black); padding-bottom: 80px; /* Space for bottom nav */ }
 
-        /* Mobile Header (Hidden on Desktop) */
-        .mobile-header { display: none; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: var(--pure-white); border-bottom: 1px solid var(--border-color); z-index: 50; }
-        .mobile-logo { font-size: 1.25rem; font-weight: 700; color: var(--dark-green); }
-        .hamburger { background: none; border: none; display: flex; flex-direction: column; gap: 5px; cursor: pointer; }
-        .hamburger span { width: 25px; height: 3px; background-color: var(--dark-green); border-radius: 5px; transition: 0.3s; }
+        /* Top App Bar */
+        .app-header { background: var(--pure-white); padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .app-logo { font-weight: 800; color: var(--dark-green); font-size: 1.2rem; }
+        .user-badge { background: var(--lime-green); color: var(--dark-green); padding: 0.25rem 0.75rem; border-radius: 50px; font-weight: bold; font-size: 0.85rem; }
 
-        /* Sidebar Styling */
-        .sidebar { width: 260px; background-color: var(--pure-white); border-right: 1px solid var(--border-color); padding: 2rem 1.5rem; display: flex; flex-direction: column; position: fixed; height: 100vh; left: 0; top: 0; z-index: 100; transition: transform 0.3s ease; }
-        .sidebar-logo { font-size: 1.5rem; font-weight: 700; color: var(--dark-green); margin-bottom: 3rem; }
-        .nav-item { padding: 0.85rem 1rem; margin-bottom: 0.5rem; border-radius: 8px; color: #4B5563; text-decoration: none; font-weight: 600; transition: 0.2s; display: block; cursor: pointer; }
-        .nav-item:hover, .nav-item.active { background-color: rgba(212, 237, 109, 0.2); color: var(--dark-green); }
-        .logout-btn { margin-top: auto; color: #DC2626; background: rgba(220, 38, 38, 0.1); }
+        /* View Container */
+        .view-section { display: none; padding: 1.5rem; animation: fadeIn 0.3s ease; max-width: 600px; margin: 0 auto; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Overlay for Mobile Sidebar */
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 90; opacity: 0; transition: opacity 0.3s; }
+        /* Daily Tip Card */
+        .tip-card { background: linear-gradient(135deg, var(--dark-green), #1e5232); color: white; padding: 1.5rem; border-radius: 16px; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(20, 54, 33, 0.2); position: relative; overflow: hidden; }
+        .tip-card h3 { font-size: 0.9rem; color: var(--lime-green); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
+        .tip-card p { font-size: 1.05rem; line-height: 1.5; font-weight: 500; }
 
-        /* Main Content */
-        .main-content { flex: 1; padding: 3rem 4rem; margin-left: 260px; overflow-y: auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; }
-        .header h1 { font-size: 2rem; color: var(--dark-green); }
-        .user-profile { display: flex; align-items: center; gap: 10px; background: var(--pure-white); padding: 0.5rem 1rem; border-radius: 50px; border: 1px solid var(--border-color); font-weight: 600; }
+        /* Action Buttons */
+        .btn { width: 100%; padding: 1rem; border-radius: 12px; font-weight: bold; font-size: 1rem; text-align: center; border: none; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background: var(--dark-green); color: white; margin-top: 1rem; }
+        .btn-primary:active { background: #0f2919; transform: scale(0.98); }
 
-        /* Stats Cards */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
-        .stat-card { background: var(--pure-white); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02); border-top: 4px solid var(--lime-green); }
-        .stat-title { color: #6B7280; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
-        .stat-value { font-size: 2rem; font-weight: 700; color: var(--dark-green); }
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-box { background: var(--pure-white); padding: 1.25rem; border-radius: 16px; border: 1px solid var(--border-color); text-align: center; }
+        .stat-box h4 { color: #64748B; font-size: 0.85rem; margin-bottom: 0.5rem; }
+        .stat-box p { color: var(--dark-green); font-size: 1.5rem; font-weight: 800; }
 
-        /* Action Section */
-        .action-section { background: var(--pure-white); padding: 2rem; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        .action-header { margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
-        .btn { background: var(--dark-green); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; text-decoration: none; display: inline-block; }
-        .btn:hover { background: var(--lime-green); color: var(--dark-green); }
+        /* Form Styling */
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--dark-green); }
+        .form-group select, .form-group input { width: 100%; padding: 0.85rem; border: 1.5px solid var(--border-color); border-radius: 12px; font-size: 1rem; background: var(--pure-white); appearance: none; }
+        .form-group select:focus { border-color: var(--dark-green); outline: none; }
+        #map { height: 300px; border-radius: 12px; margin-top: 1.5rem; border: 1px solid var(--border-color); display: none; }
 
-        .empty-state { text-align: center; padding: 3rem; color: #6B7280; border: 2px dashed var(--border-color); border-radius: 8px; background: #F9FAFB; margin-top: 1rem; }
+        /* Empty State */
+        .empty-state { text-align: center; padding: 4rem 2rem; background: var(--pure-white); border-radius: 16px; border: 2px dashed var(--border-color); margin-top: 1rem; }
 
-        /* Toast Notification */
-        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--dark-green); color: white; padding: 1rem 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: translateY(100px); opacity: 0; transition: all 0.3s ease; z-index: 1000; font-weight: bold; }
-        .toast.show { transform: translateY(0); opacity: 1; }
+        /* Bottom Navigation Bar */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--pure-white); display: flex; justify-content: space-around; padding: 0.75rem 0.5rem; box-shadow: 0 -2px 15px rgba(0,0,0,0.05); border-top: 1px solid var(--border-color); z-index: 100; padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #94A3B8; text-decoration: none; font-size: 0.75rem; font-weight: 600; gap: 4px; flex: 1; cursor: pointer; transition: color 0.2s; }
+        .nav-item.active { color: var(--dark-green); }
+        .nav-icon { font-size: 1.5rem; margin-bottom: 2px; filter: grayscale(100%) opacity(0.5); transition: 0.2s; }
+        .nav-item.active .nav-icon { filter: grayscale(0%) opacity(1); }
 
-        /* Mobile Layout Adjustments */
-        @media (max-width: 900px) {
-            .mobile-header { display: flex; }
-            .sidebar { transform: translateX(-100%); } /* Hide sidebar completely by default */
-            .sidebar.active { transform: translateX(0); } /* Show when active */
-            .main-content { margin-left: 0; padding: 1.5rem; }
-            .header { flex-direction: column; align-items: flex-start; gap: 1rem; }
-            .overlay.active { display: block; opacity: 1; }
-        }
+        /* Logout Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        .modal-card { background: white; padding: 2rem; border-radius: 20px; width: 90%; max-width: 350px; text-align: center; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-card h2 { color: var(--dark-green); margin-bottom: 1rem; }
+        .modal-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .btn-cancel { flex: 1; padding: 0.85rem; border-radius: 12px; border: none; font-weight: bold; background: #F1F5F9; color: #475569; cursor: pointer; }
+        .btn-danger { flex: 1; padding: 0.85rem; border-radius: 12px; border: none; font-weight: bold; background: #FEE2E2; color: #DC2626; cursor: pointer; }
+
     </style>
 </head>
 <body>
 
-    <div class="mobile-header">
-        <div class="mobile-logo">🌿 UzoAgro AI</div>
-        <button class="hamburger" onclick="toggleSidebar()">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-    </div>
+    <header class="app-header">
+        <div class="app-logo">🌿 UzoAgro</div>
+        <div class="user-badge" id="userBadge">Farmer</div>
+    </header>
 
-    <div class="overlay" onclick="toggleSidebar()"></div>
+    <main id="view-overview" class="view-section active">
+        <h2 style="margin-bottom: 1.5rem; color: var(--dark-green);" id="greeting">Good morning!</h2>
 
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-logo">🌿 UzoAgro AI</div>
-        <a href="#" class="nav-item active">Overview</a>
-        <a onclick="showComingSoon('Internal Driver Matching')" class="nav-item">Find Drivers</a>
-        <a href="diagnose.html" class="nav-item">AI Crop Care</a>
-        <a onclick="showComingSoon('Transaction History')" class="nav-item">Transaction History</a>
-        <a onclick="logout()" class="nav-item logout-btn">Log Out</a>
-    </div>
-
-    <div class="main-content">
-        <div class="header">
-            <div>
-                <h1 id="welcomeMessage">Welcome back!</h1>
-                <p style="color: #6B7280; margin-top: 0.25rem;">Here is your logistics overview for today.</p>
-            </div>
-            <div class="user-profile">
-                <span id="userRoleBadge">👤 Verified</span>
-            </div>
+        <div class="tip-card">
+            <h3>💡 Daily Agritech Tip</h3>
+            <p id="dailyTip">Loading today's insight...</p>
         </div>
 
         <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-title">Active Logistics Matches</div>
-                <div class="stat-value">0</div>
+            <div class="stat-box">
+                <h4>Matches Found</h4>
+                <p>0</p>
             </div>
-            <div class="stat-card">
-                <div class="stat-title">Total Tonnage Moved</div>
-                <div class="stat-value">0 <span style="font-size: 1rem; color: #6B7280;">Tons</span></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-title">Security Status</div>
-                <div class="stat-value" style="color: #059669; font-size: 1.25rem; margin-top: 0.5rem;">✅ KYC Passed</div>
+            <div class="stat-box">
+                <h4>Security</h4>
+                <p style="color: #059669; font-size: 1.2rem; margin-top: 5px;">✅ Verified</p>
             </div>
         </div>
 
-        <div class="action-section">
-            <div class="action-header">
-                <h2 style="color: var(--dark-green);">Recent Activity</h2>
-            </div>
+        <button class="btn btn-primary" onclick="switchTab('logistics')">Launch Matching Engine 🚚</button>
+    </main>
 
-            <div class="empty-state">
-                <div style="font-size: 2.5rem; margin-bottom: 1rem;">🚚</div>
-                <h3 style="color: var(--ash-black); margin-bottom: 0.5rem;">No active shipments yet</h3>
-                <p style="margin-bottom: 1.5rem;">Ready to move your harvest or find a backhaul load?</p>
-                <button onclick="showComingSoon('Live Routing Engine')" class="btn">Launch Matching Engine</button>
+    <main id="view-logistics" class="view-section">
+        <h2 style="margin-bottom: 0.5rem; color: var(--dark-green);">Find a Truck</h2>
+        <p style="color: #64748B; margin-bottom: 1.5rem; font-size: 0.9rem;">Our AI will scan for returning trucks heading to your drop-off city to secure the lowest rate.</p>
+
+        <form id="mobileMatchForm">
+            <div class="form-group">
+                <label>Crop Type</label>
+                <select id="cropType">
+                    <option value="Maize">Maize (Grains)</option>
+                    <option value="Cassava">Cassava (Tubers)</option>
+                    <option value="Tomatoes">Tomatoes (Perishables)</option>
+                </select>
+            </div>
+            <div class="stats-grid" style="margin-bottom: 0;">
+                <div class="form-group">
+                    <label>Pickup City</label>
+                    <select id="pickupCity">
+                        <option value="Lagos">Lagos</option><option value="Kano">Kano</option>
+                        <option value="Enugu">Enugu</option><option value="Awka">Awka</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Drop-off City</label>
+                    <select id="dropoffCity">
+                        <option value="Kano">Kano</option><option value="Lagos">Lagos</option>
+                        <option value="Enugu">Enugu</option><option value="Awka">Awka</option>
+                    </select>
+                </div>
+            </div>
+            <button type="button" class="btn btn-primary" id="matchBtn" onclick="runMatching()">Find Optimal Drivers</button>
+        </form>
+
+        <div id="map"></div>
+        <div id="resultsContainer" style="margin-top: 1rem;"></div>
+    </main>
+
+    <main id="view-history" class="view-section">
+        <h2 style="margin-bottom: 1.5rem; color: var(--dark-green);">Transaction History</h2>
+        <div class="empty-state">
+            <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">📜</div>
+            <h3 style="color: var(--ash-black); margin-bottom: 0.5rem; font-size: 1.1rem;">No History Yet</h3>
+            <p style="color: #64748B; font-size: 0.95rem; line-height: 1.5;">Your logistics history, secured payments, and matched drivers will appear here once you make your first transaction.</p>
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('overview')" id="nav-overview">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('logistics')" id="nav-logistics">
+            <span class="nav-icon">🚚</span>
+            <span>Trucks</span>
+        </div>
+        <a href="diagnose.html" class="nav-item" style="text-decoration: none;">
+            <span class="nav-icon">🩺</span>
+            <span>AI Care</span>
+        </a>
+        <div class="nav-item" onclick="switchTab('history')" id="nav-history">
+            <span class="nav-icon">📜</span>
+            <span>History</span>
+        </div>
+        <div class="nav-item" onclick="showLogoutModal()">
+            <span class="nav-icon">🚪</span>
+            <span>Exit</span>
+        </div>
+    </nav>
+
+    <div class="modal-overlay" id="logoutModal">
+        <div class="modal-card">
+            <h2>Sign Out?</h2>
+            <p style="color: #64748B;">Are you sure you want to exit your secure UzoAgro session?</p>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeLogoutModal()">No, Stay</button>
+                <button class="btn-danger" onclick="confirmLogout()">Yes, Sign Out</button>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="toast">🚀 Feature coming soon!</div>
-
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Authentication Check
+        // 1. Session & Greeting Logic
         document.addEventListener("DOMContentLoaded", () => {
             const userData = localStorage.getItem('uzoagro_user');
-            if (userData) {
-                const user = JSON.parse(userData);
-                document.getElementById('welcomeMessage').innerText = `Welcome, ${user.name.split(' ')[0]}!`;
-                document.getElementById('userRoleBadge').innerHTML = `👤 ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}`;
-            } else {
-                window.location.href = 'login.html';
-            }
+            if (!userData) { window.location.href = 'login.html'; return; }
+
+            const user = JSON.parse(userData);
+            document.getElementById('userBadge').innerText = user.role.toUpperCase();
+
+            const hour = new Date().getHours();
+            let greeting = hour < 12 ? "Good morning," : hour < 18 ? "Good afternoon," : "Good evening,";
+            document.getElementById('greeting').innerText = `${greeting} ${user.name.split(' ')[0]}!`;
+
+            generateDailyTip();
         });
 
-        // Mobile Sidebar Logic
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.querySelector('.overlay');
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
+        // 2. Daily Agritech Tips Array
+        function generateDailyTip() {
+            const tips = [
+                "Rotating cassava with legumes restores soil nitrogen naturally and boosts your next yield.",
+                "Market Insight: Transport backhaul costs are usually 15% lower mid-week.",
+                "Ensure maize is dried to exactly 14% moisture before bagging to completely prevent aflatoxins.",
+                "Splitting your harvest into two smaller shipments can sometimes match faster with returning delivery vans.",
+                "Monitor your tomato leaves daily; early blight is 80% easier to treat if caught in the first 48 hours."
+            ];
+            // Pick a random tip
+            const randomTip = tips[Math.floor(Math.random() * tips.length)];
+            document.getElementById('dailyTip').innerText = randomTip;
         }
 
-        // Sleek "Coming Soon" Toast
-        function showComingSoon(featureName) {
-            const toast = document.getElementById('toast');
-            toast.innerText = `🚀 ${featureName} is launching soon!`;
-            toast.classList.add('show');
+        // 3. App View Switching Logic
+        let map; // Global map variable
+        function switchTab(tabId) {
+            // Hide all views, remove active from all nav items
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
-            // Hide it again after 3 seconds
+            // Show selected
+            document.getElementById(`view-${tabId}`).classList.add('active');
+            if(document.getElementById(`nav-${tabId}`)) {
+                document.getElementById(`nav-${tabId}`).classList.add('active');
+            }
+
+            // Fix Map rendering bug when switching to logistics tab
+            if (tabId === 'logistics') {
+                setTimeout(() => {
+                    if (!map) {
+                        map = L.map('map').setView([9.0820, 8.6753], 6);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                    } else {
+                        map.invalidateSize();
+                    }
+                }, 100);
+            }
+        }
+
+        // 4. Logistics Matching Logic
+        async function runMatching() {
+            const btn = document.getElementById('matchBtn');
+            btn.innerText = "Scanning Routes...";
+            btn.disabled = true;
+
+            document.getElementById('map').style.display = "block";
+            if(map) map.invalidateSize();
+
+            // Simulate API Call for Demo
             setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
+                const results = document.getElementById('resultsContainer');
+                results.innerHTML = `
+                    <div style="background: white; border-radius: 12px; padding: 1rem; border-left: 4px solid var(--accent-orange); box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <strong style="color: var(--dark-green);">Optimal Match Found</strong>
+                            <span style="background: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">88% Match</span>
+                        </div>
+                        <p style="font-size: 0.9rem; color: #64748B; margin-bottom: 0.5rem;">Driver is returning empty to your destination city.</p>
+                        <button class="btn" style="background: var(--lime-green); color: var(--dark-green); padding: 0.5rem; font-size: 0.9rem;" onclick="alert('Secure handshake initiated!')">Lock Driver</button>
+                    </div>
+                `;
+                btn.innerText = "Find Optimal Drivers";
+                btn.disabled = false;
+            }, 1500);
         }
 
-        function logout() {
+        // 5. Logout Modal Logic
+        function showLogoutModal() { document.getElementById('logoutModal').style.display = 'flex'; }
+        function closeLogoutModal() { document.getElementById('logoutModal').style.display = 'none'; }
+        function confirmLogout() {
             localStorage.removeItem('uzoagro_user');
             window.location.href = 'index.html';
         }
