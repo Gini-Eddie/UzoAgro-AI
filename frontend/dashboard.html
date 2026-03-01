@@ -34,10 +34,24 @@
 
         /* Profile Card */
         .profile-card { background: var(--pure-white); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        .profile-avatar { width: 60px; height: 60px; border-radius: 50%; background: var(--lime-green); color: var(--dark-green); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; }
+        .profile-avatar { width: 60px; height: 60px; border-radius: 50%; background: var(--lime-green); color: var(--dark-green); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; flex-shrink: 0; }
         .profile-info h2 { font-size: 1.25rem; color: var(--dark-green); margin-bottom: 0.25rem; }
-        .profile-details { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem; font-size: 0.85rem; color: #64748B; }
-        .profile-tag { background: var(--bg-gray); padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); }
+        .profile-details { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; font-size: 0.85rem; color: #64748B; }
+        .profile-tag { background: var(--bg-gray); padding: 0.35rem 0.65rem; border-radius: 6px; border: 1px solid var(--border-color); }
+
+        /* Section Titles */
+        .section-title { font-size: 1.1rem; color: var(--dark-green); margin-bottom: 1rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+
+        /* Box Styles for Feed/Inbox */
+        .content-box { background: var(--pure-white); border-radius: 16px; border: 1px solid var(--border-color); padding: 1.25rem; margin-bottom: 1.5rem; }
+
+        /* Inbox/Notification Item */
+        .msg-item { display: flex; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--bg-gray); margin-bottom: 1rem; }
+        .msg-item:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+        .msg-icon { width: 40px; height: 40px; border-radius: 10px; background: #FFF7ED; color: var(--accent-orange); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .msg-content h4 { font-size: 0.95rem; color: var(--ash-black); margin-bottom: 0.25rem; }
+        .msg-content p { font-size: 0.85rem; color: #64748B; line-height: 1.4; }
+        .msg-time { font-size: 0.75rem; color: #94A3B8; margin-top: 0.25rem; display: block; }
 
         /* Stats Grid */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
@@ -45,17 +59,9 @@
         .stat-box h4 { color: #64748B; font-size: 0.85rem; margin-bottom: 0.5rem; }
         .stat-box p { color: var(--dark-green); font-size: 1.5rem; font-weight: 800; }
 
-        /* Transactions Feed (On Top) */
-        .section-title { font-size: 1.1rem; color: var(--dark-green); margin-bottom: 1rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
-        .recent-transactions { background: var(--pure-white); border-radius: 16px; border: 1px solid var(--border-color); padding: 1rem; margin-bottom: 1.5rem; }
-        .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--bg-gray); }
-        .tx-item:last-child { border-bottom: none; padding-bottom: 0; }
-        .tx-icon { width: 40px; height: 40px; border-radius: 10px; background: #E0F2FE; color: #0284C7; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-
         /* Daily Tip */
         .tip-card { background: linear-gradient(135deg, var(--dark-green), #1e5232); color: white; padding: 1.5rem; border-radius: 16px; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(20, 54, 33, 0.2); }
         .tip-card h3 { font-size: 0.85rem; color: var(--lime-green); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
-        .tip-card p { font-size: 1rem; line-height: 1.5; font-weight: 500; }
 
         /* Form Styling */
         .form-group { margin-bottom: 1.25rem; }
@@ -81,11 +87,12 @@
         .btn-cancel { background: #F1F5F9; color: #475569; }
         .btn-danger { background: #FEE2E2; color: #DC2626; }
 
-        /* ==================== RESPONSIVE MEDIA QUERIES ==================== */
+        /* ==================== RESPONSIVE BUG FIX ==================== */
         @media (max-width: 768px) {
+            body { flex-direction: column; } /* THIS FIXES THE 60% WHITE CANVAS BUG */
             .sidebar { display: none; }
             .mobile-header { display: flex; }
-            .main-content { margin-left: 0; padding: 1.5rem; padding-bottom: 100px; }
+            .main-content { margin-left: 0; padding: 1rem; padding-bottom: 100px; }
             .bottom-nav { display: flex; }
             .profile-card { flex-direction: column; text-align: center; }
         }
@@ -124,6 +131,28 @@
                 </div>
             </div>
 
+            <div class="section-title">
+                Recent Activity
+                <span style="font-size: 0.8rem; color: #0284C7; cursor: pointer;" onclick="switchTab('history')">See All</span>
+            </div>
+            <div class="content-box">
+                <div style="text-align: center; color: #94A3B8; padding: 0.5rem 0; font-size: 0.9rem;">
+                    No recent transactions. Launch the matching engine to secure a truck.
+                </div>
+            </div>
+
+            <div class="section-title">Inbox & Alerts 🔔</div>
+            <div class="content-box">
+                <div class="msg-item">
+                    <div class="msg-icon">👋</div>
+                    <div class="msg-content">
+                        <h4>Welcome to UzoAgro AI</h4>
+                        <p>Your account has been securely verified. You can now use the AI diagnostic tool and logistics engine.</p>
+                        <span class="msg-time">Just now</span>
+                    </div>
+                </div>
+                </div>
+
             <div class="stats-grid">
                 <div class="stat-box">
                     <h4>Wallet Balance</h4>
@@ -132,16 +161,6 @@
                 <div class="stat-box">
                     <h4>Matches Found</h4>
                     <p>0</p>
-                </div>
-            </div>
-
-            <div class="section-title">
-                Recent Activity
-                <span style="font-size: 0.8rem; color: #0284C7; cursor: pointer;" onclick="switchTab('history')">See All</span>
-            </div>
-            <div class="recent-transactions">
-                <div style="text-align: center; color: #94A3B8; padding: 1rem 0; font-size: 0.9rem;">
-                    No recent transactions. Launch the matching engine to secure a truck.
                 </div>
             </div>
 
@@ -220,22 +239,17 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            // Simulated local storage grab (Fallbacks added if keys are missing)
             const userData = JSON.parse(localStorage.getItem('uzoagro_user')) || {
                 name: "Guest User", role: "farmer", phone: "Not provided", email: "Not provided", primary_city: "Unknown"
             };
 
-            // Populate Identity Card
             document.getElementById('profileName').innerText = userData.name;
             document.getElementById('avatarInitials').innerText = userData.name.substring(0, 2).toUpperCase();
             document.getElementById('profilePhone').innerHTML = `📞 ${userData.phone || "Not provided"}`;
             document.getElementById('profileEmail').innerHTML = `✉️ ${userData.email || "No email linked"}`;
             document.getElementById('profileCity').innerHTML = `📍 ${userData.primary_city || "Location unknown"}`;
-
-            // Mobile Top Badge
             document.getElementById('mobileRole').innerText = userData.role.toUpperCase();
 
-            // Dynamic Farm/Truck tag
             const entityTag = document.getElementById('profileEntity');
             if(userData.role === 'farmer') {
                 entityTag.innerHTML = `🌾 Farm: ${userData.name.split(' ')[0]}'s Farm`;
@@ -243,7 +257,6 @@
                 entityTag.innerHTML = `🚛 Truck: ${userData.name.split(' ')[0]} Logistics`;
             }
 
-            // Generate Tip
             const tips = [
                 "Rotating cassava with legumes restores soil nitrogen naturally and boosts your next yield.",
                 "Ensure maize is dried to exactly 14% moisture before bagging to completely prevent aflatoxins.",
@@ -254,15 +267,9 @@
 
         let map;
         function switchTab(tabId) {
-            // Hide all views
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            // Remove active state from all nav items (Mobile & Desktop)
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-
-            // Show target view
             document.getElementById(`view-${tabId}`).classList.add('active');
-
-            // Highlight active navs
             if(document.getElementById(`desk-${tabId}`)) document.getElementById(`desk-${tabId}`).classList.add('active');
             if(document.getElementById(`mob-${tabId}`)) document.getElementById(`mob-${tabId}`).classList.add('active');
 
