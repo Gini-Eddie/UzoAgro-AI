@@ -73,10 +73,15 @@
                     <input type="tel" id="regPhone" placeholder="080XXXXXXXX" required>
                 </div>
                 <div style="flex: 1;">
-                    <label>NIN (Security Verification)</label>
+                    <label>NIN (Identity Verification)</label>
                     <input type="text" id="regNin" placeholder="11-digit NIN" required>
                     <span class="security-badge">🔒 Encrypted securely</span>
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label>Create a 4-Digit Login PIN</label>
+                <input type="password" id="regPin" placeholder="Enter 4 numbers" maxlength="4" pattern="\d{4}" inputmode="numeric" required style="letter-spacing: 5px; font-size: 1.2rem;">
             </div>
 
             <div class="farmer-fields">
@@ -155,8 +160,6 @@
         async function submitSignup() {
             const btn = document.querySelector('.btn');
             const originalText = btn.textContent;
-            btn.textContent = "Initializing Payment...";
-            btn.disabled = true;
 
             const isFarmer = document.getElementById('btn-farmer').classList.contains('active');
             const role = isFarmer ? 'farmer' : 'driver';
@@ -164,14 +167,21 @@
             const email = document.getElementById('regEmail').value;
             const phone = document.getElementById('regPhone').value;
             const nin = document.getElementById('regNin').value;
+            const pin = document.getElementById('regPin').value; // <-- Grab the PIN
             const primary_city = isFarmer ? document.getElementById('farmerCity').value : document.getElementById('driverCity').value;
 
-            if(!name || !phone || !nin || !primary_city) {
+            // Strict Validation
+            if(!name || !phone || !nin || !primary_city || !pin) {
                 alert("Please fill out all required fields.");
-                btn.textContent = originalText;
-                btn.disabled = false;
                 return;
             }
+            if(pin.length !== 4 || isNaN(pin)) {
+                alert("Your PIN must be exactly 4 numbers.");
+                return;
+            }
+
+            btn.textContent = "Initializing Payment...";
+            btn.disabled = true;
 
             const transactionEmail = email ? email : `${phone}@uzoagro.com`;
 
@@ -190,6 +200,7 @@
                         email: email,
                         phone: phone,
                         nin: nin,
+                        pin: pin, // <-- Add it to the payload
                         primary_city: primary_city,
                         reference: transaction.reference
                     };
@@ -202,10 +213,13 @@
                         });
 
                         if (response.ok) {
+                            // Save profile safely to the browser
                             localStorage.setItem('uzoagro_user', JSON.stringify({
                                 name: name,
                                 role: role,
-                                phone: phone
+                                phone: phone,
+                                email: email,
+                                primary_city: primary_city
                             }));
                             window.location.href = 'dashboard.html';
                         } else {

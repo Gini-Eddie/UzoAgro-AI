@@ -2,85 +2,105 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Log In | UzoAgro AI</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
     <style>
         :root {
             --dark-green: #143621; --lime-green: #D4ED6D; --accent-orange: #C05621;
-            --ash-black: #1A202C; --shade-white: #F7FAFC; --pure-white: #FFFFFF;
-            --border-color: #E2E8F0; --radius: 12px;
+            --ash-black: #1A202C; --shade-white: #F4F7F6; --pure-white: #FFFFFF;
+            --border-color: #E2E8F0; --radius: 16px;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", sans-serif; }
-        body { background-color: var(--shade-white); color: var(--ash-black); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 2rem; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--shade-white); color: var(--ash-black); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1.5rem; }
 
-        .auth-card { background: var(--pure-white); padding: 3rem; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: 0 10px 15px rgba(0,0,0,0.05); width: 100%; max-width: 450px; }
+        .auth-card { background: var(--pure-white); padding: 3rem 2.5rem; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 450px; animation: slideUp 0.4s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
         .logo-header { text-align: center; margin-bottom: 2.5rem; }
-        .logo-header a { color: var(--dark-green); font-size: 2.2rem; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; font-weight: 700; }
-        .logo-header a:hover { color: var(--accent-orange); }
+        .logo-header a { color: var(--dark-green); font-size: 2.2rem; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; font-weight: 800; letter-spacing: -0.5px; }
 
         .form-group { margin-bottom: 1.5rem; }
         label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.95rem; color: var(--dark-green); }
-        input { width: 100%; padding: 0.85rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; background: var(--shade-white); transition: border 0.3s; color: var(--ash-black); }
-        input:focus { outline: none; border-color: var(--lime-green); }
+        input { width: 100%; padding: 1rem; border: 1.5px solid var(--border-color); border-radius: 12px; font-size: 1.1rem; background: #F8FAFC; color: var(--ash-black); transition: all 0.2s; }
+        input:focus { outline: none; border-color: var(--dark-green); background: var(--pure-white); box-shadow: 0 0 0 4px rgba(212, 237, 109, 0.2); }
 
-        .btn { width: 100%; background: var(--dark-green); color: white; border: none; padding: 1rem; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 1rem; transition: 0.3s; }
-        .btn:hover { background: var(--lime-green); color: var(--dark-green); }
+        /* Secure PIN Styling */
+        .pin-input { letter-spacing: 12px; font-size: 1.5rem; font-weight: bold; text-align: center; font-family: monospace; }
 
-        .helper-text { font-size: 0.85rem; color: #718096; margin-top: 0.5rem; line-height: 1.4; }
+        .btn { width: 100%; background: var(--dark-green); color: white; border: none; padding: 1.1rem; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 1rem; transition: 0.2s; box-shadow: 0 4px 12px rgba(20, 54, 33, 0.15); }
+        .btn:active { transform: scale(0.98); background: #0f2919; }
+        .btn:disabled { background: #94A3B8; cursor: not-allowed; box-shadow: none; }
+
+        .error-message { color: #DC2626; background: #FEE2E2; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; margin-bottom: 1rem; text-align: center; display: none; border: 1px solid #FCA5A5; font-weight: 500; }
+
+        /* Mobile Adjustments */
+        @media (max-width: 480px) {
+            .auth-card { padding: 2.5rem 1.5rem; border-radius: 20px; }
+            .logo-header { margin-bottom: 2rem; }
+        }
     </style>
 </head>
 <body>
 
     <div class="auth-card">
         <div class="logo-header">
-            <a href="index.html">🌿 UzoAgro AI</a>
-            <p style="color: #718096; margin-top: 0.5rem;">Secure Access Portal</p>
+            <a href="index.html">🌿 UzoAgro</a>
+            <p style="color: #64748B; margin-top: 0.5rem; font-size: 1.05rem;">Welcome back.</p>
         </div>
 
-        <form id="loginForm">
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="loginForm" onsubmit="event.preventDefault(); submitLogin();">
             <div class="form-group">
-                <label>Phone Number (User ID)</label>
-                <input type="tel" id="loginPhone" placeholder="080XXXXXXXX" required>
+                <label>Phone Number</label>
+                <input type="tel" id="loginPhone" placeholder="080XXXXXXXX" required inputmode="numeric">
             </div>
 
             <div class="form-group">
-                <label>Secure Password</label>
-                <input type="password" id="loginPassword" placeholder="Enter your password" required>
-                <div class="helper-text">
-                    *First time logging in? Enter your <b>Phone Number</b> as your default password.
-                </div>
+                <label>4-Digit Secure PIN</label>
+                <input type="password" id="loginPin" class="pin-input" placeholder="••••" maxlength="4" pattern="\d{4}" required inputmode="numeric">
             </div>
 
-            <button type="button" class="btn" onclick="submitLogin()">Access Dashboard</button>
+            <button type="submit" class="btn" id="loginBtn">Secure Log In</button>
 
-            <p style="text-align: center; margin-top: 1.5rem; color: #4A5568; font-size: 0.95rem;">
-                Don't have an account? <a href="signup.html" style="color: var(--dark-green); font-weight: bold; text-decoration: none;">Register securely here</a>
+            <p style="text-align: center; margin-top: 1.5rem; color: #64748B; font-size: 0.95rem;">
+                Don't have an account? <a href="signup.html" style="color: var(--dark-green); font-weight: bold; text-decoration: none;">Sign up here</a>
             </p>
         </form>
     </div>
 
     <script>
         async function submitLogin() {
-            const btn = document.querySelector('.btn');
+            const btn = document.getElementById('loginBtn');
+            const errorBox = document.getElementById('errorMessage');
             const originalText = btn.textContent;
-            btn.textContent = "Authenticating...";
-            btn.disabled = true;
 
-            const phone = document.getElementById('loginPhone').value;
-            const password = document.getElementById('loginPassword').value;
+            const phone = document.getElementById('loginPhone').value.trim();
+            const pin = document.getElementById('loginPin').value.trim();
 
-            if(!phone || !password) {
-                alert("Please enter both your User ID (Phone) and Password.");
-                btn.textContent = originalText;
-                btn.disabled = false;
+            // Reset UI
+            errorBox.style.display = 'none';
+            errorBox.innerText = '';
+
+            // Validation
+            if(!phone || !pin) {
+                showError("Please enter your phone number and PIN.");
+                return;
+            }
+            if(pin.length !== 4 || isNaN(pin)) {
+                showError("Your PIN must be exactly 4 numbers.");
                 return;
             }
 
-            const payload = { phone: phone, password: password };
+            // Start Loading State
+            btn.textContent = "Authenticating...";
+            btn.disabled = true;
+
+            const payload = { phone: phone, pin: pin };
 
             try {
-                // FIXED: Now connects directly to the live Hugging Face brain
+                // Connect to your Hugging Face Backend
                 const response = await fetch('https://uzoagroai-uzoagro-api.hf.space/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -89,22 +109,35 @@
 
                 if (response.ok) {
                     const data = await response.json();
+
+                    // Success! Save the safe user profile locally
                     localStorage.setItem('uzoagro_user', JSON.stringify({
-                        name: data.name,
-                        role: data.role,
-                        phone: phone
+                        name: data.user.name,
+                        role: data.user.role,
+                        phone: data.user.phone,
+                        email: data.user.email,
+                        primary_city: data.user.primary_city
                     }));
+
+                    // Redirect to the shiny new dashboard
                     window.location.href = 'dashboard.html';
                 } else {
-                    const error = await response.json();
-                    alert('Login Failed: ' + error.detail);
+                    const errorData = await response.json();
+                    showError(errorData.detail || "Invalid login credentials.");
+                    btn.textContent = originalText;
+                    btn.disabled = false;
                 }
             } catch (err) {
-                alert('Connection error. Ensure the UzoAgro AI backend is live.');
-            } finally {
+                showError("Connection error to UzoAgro Cloud. Please try again.");
                 btn.textContent = originalText;
                 btn.disabled = false;
             }
+        }
+
+        function showError(message) {
+            const errorBox = document.getElementById('errorMessage');
+            errorBox.innerText = message;
+            errorBox.style.display = 'block';
         }
     </script>
 </body>

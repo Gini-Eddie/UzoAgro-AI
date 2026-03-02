@@ -102,6 +102,12 @@
 
     <aside class="sidebar">
         <div class="sidebar-logo">🌿 UzoAgro AI</div>
+
+        <div style="background: var(--bg-gray); padding: 1rem; border-radius: 12px; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">
+            <div style="font-weight: bold; color: var(--dark-green); font-size: 0.9rem;" id="deskRole">FARMER</div>
+            <button onclick="showProfileModal()" style="background: var(--lime-green); color: var(--dark-green); border: none; padding: 5px 15px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: 0.2s;">ME</button>
+        </div>
+
         <div class="nav-item active" onclick="switchTab('overview')" id="desk-overview">🏠 Overview</div>
         <div class="nav-item" onclick="switchTab('logistics')" id="desk-logistics">🚚 Logistics & Trucks</div>
         <a href="diagnose.html" class="nav-item" style="text-decoration: none;">🩺 AI Crop Care</a>
@@ -111,25 +117,15 @@
 
     <header class="mobile-header">
         <div class="mobile-logo">🌿 UzoAgro</div>
-        <div style="background: #E2E8F0; padding: 5px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: bold;" id="mobileRole">FARMER</div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="background: #E2E8F0; padding: 5px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: bold;" id="mobileRole">FARMER</div>
+            <button onclick="showProfileModal()" style="background: var(--dark-green); color: white; border: none; padding: 5px 15px; border-radius: 50px; font-weight: bold; cursor: pointer;">ME</button>
+        </div>
     </header>
 
     <main class="main-content">
 
         <section id="view-overview" class="view-section active">
-
-            <div class="profile-card">
-                <div class="profile-avatar" id="avatarInitials">UE</div>
-                <div class="profile-info">
-                    <h2 id="profileName">Loading Profile...</h2>
-                    <div class="profile-details">
-                        <span class="profile-tag" id="profilePhone">📞 ---</span>
-                        <span class="profile-tag" id="profileEmail">✉️ ---</span>
-                        <span class="profile-tag" id="profileEntity">🏢 ---</span>
-                        <span class="profile-tag" id="profileCity">📍 ---</span>
-                    </div>
-                </div>
-            </div>
 
             <div class="section-title">
                 Recent Activity
@@ -236,6 +232,43 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal-card" style="text-align: left; max-width: 400px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--bg-gray); padding-bottom: 1rem;">
+                <h2 style="color: var(--dark-green); margin: 0;">My Profile</h2>
+                <button onclick="closeProfileModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94A3B8;">&times;</button>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <div style="font-size: 0.85rem; color: #64748B; font-weight: 600; text-transform: uppercase; margin-bottom: 0.25rem;">Full Name</div>
+                <div style="font-size: 1.1rem; color: var(--ash-black); font-weight: bold;" id="modalName">---</div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <div style="font-size: 0.85rem; color: #64748B; font-weight: 600; text-transform: uppercase; margin-bottom: 0.25rem;">Entity / Farm</div>
+                <div style="font-size: 1rem; color: var(--ash-black);" id="modalEntity">---</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <div style="font-size: 0.85rem; color: #64748B; font-weight: 600; text-transform: uppercase; margin-bottom: 0.25rem;">Phone</div>
+                    <div style="font-size: 0.95rem; color: var(--ash-black);" id="modalPhone">---</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: #64748B; font-weight: 600; text-transform: uppercase; margin-bottom: 0.25rem;">Location</div>
+                    <div style="font-size: 0.95rem; color: var(--ash-black);" id="modalCity">---</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <div style="font-size: 0.85rem; color: #64748B; font-weight: 600; text-transform: uppercase; margin-bottom: 0.25rem;">Email Address</div>
+                <div style="font-size: 0.95rem; color: var(--ash-black);" id="modalEmail">---</div>
+            </div>
+
+            <button class="btn btn-cancel" style="width: 100%;" onclick="closeProfileModal()">Close Profile</button>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
@@ -309,6 +342,29 @@
         function showLogoutModal() { document.getElementById('logoutModal').style.display = 'flex'; }
         function closeLogoutModal() { document.getElementById('logoutModal').style.display = 'none'; }
         function confirmLogout() { localStorage.removeItem('uzoagro_user'); window.location.href = 'index.html'; }
+
+        // Profile Modal Logic
+        function showProfileModal() {
+            const userData = JSON.parse(localStorage.getItem('uzoagro_user')) || {};
+
+            // Populate the safe data
+            document.getElementById('modalName').innerText = userData.name || "Guest User";
+            document.getElementById('modalPhone').innerText = userData.phone || "Not provided";
+            document.getElementById('modalEmail').innerText = userData.email || "No email linked";
+            document.getElementById('modalCity').innerText = userData.primary_city || "Unknown";
+
+            if(userData.role === 'farmer') {
+                document.getElementById('modalEntity').innerText = `🌾 ${userData.name.split(' ')[0]}'s Farm`;
+            } else {
+                document.getElementById('modalEntity').innerText = `🚛 ${userData.name.split(' ')[0]} Logistics`;
+            }
+
+            document.getElementById('profileModal').style.display = 'flex';
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').style.display = 'none';
+        }
     </script>
 </body>
 </html>

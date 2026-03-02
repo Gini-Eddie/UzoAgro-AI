@@ -180,7 +180,8 @@ async def create_user(user_data: dict):
         phone = user_data.get("phone")
         nin = user_data.get("nin")
         primary_city = user_data.get("primary_city")
-        email = user_data.get("email")  # Returns None if they didn't type it
+        email = user_data.get("email")
+        pin = user_data.get("pin")
 
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -193,8 +194,8 @@ async def create_user(user_data: dict):
 
             # Insert user (handling optional email)
             cursor.execute(
-                "INSERT INTO users (role, name, phone, nin, primary_city, email) VALUES (%s, %s, %s, %s, %s, %s)",
-                (role, name, phone, nin, primary_city, email)
+                "INSERT INTO users (role, name, phone, nin, primary_city, email, pin) VALUES (%s, %s, %s, %s, %s, %s)",
+                (role, name, phone, nin, primary_city, email, pin)
             )
 
             # Insert driver logic if applicable
