@@ -123,15 +123,21 @@
                     window.location.href = 'dashboard.html';
                 } else {
                     const errorData = await response.json();
-                    showError(errorData.detail || "Invalid login credentials.");
+                    let errorMessage = "Invalid login credentials.";
+
+                    // Check if the error is a string or a complex object
+                    if (errorData.detail) {
+                        if (typeof errorData.detail === 'string') {
+                            errorMessage = errorData.detail;
+                        } else {
+                            // If it's an object/array, stringify it so we can actually read the backend error
+                            errorMessage = JSON.stringify(errorData.detail);
+                        }
+                    }
+                    showError(errorMessage);
                     btn.textContent = originalText;
                     btn.disabled = false;
                 }
-            } catch (err) {
-                showError("Connection error to UzoAgro Cloud. Please try again.");
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
         }
 
         function showError(message) {

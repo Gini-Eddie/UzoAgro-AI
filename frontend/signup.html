@@ -223,8 +223,17 @@
                             }));
                             window.location.href = 'dashboard.html';
                         } else {
-                            const error = await response.json();
-                            alert('Error creating account: ' + error.detail);
+                            const errorData = await response.json();
+                            let errorMessage = "Error creating account.";
+
+                            if (errorData.detail) {
+                                if (typeof errorData.detail === 'string') {
+                                    errorMessage = errorData.detail;
+                                } else {
+                                    errorMessage = JSON.stringify(errorData.detail);
+                                }
+                            }
+                            alert('Signup Failed: ' + errorMessage);
                             btn.textContent = originalText;
                             btn.disabled = false;
                         }
