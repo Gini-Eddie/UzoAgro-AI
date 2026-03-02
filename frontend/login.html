@@ -79,11 +79,9 @@
             const phone = document.getElementById('loginPhone').value.trim();
             const pin = document.getElementById('loginPin').value.trim();
 
-            // Reset UI
             errorBox.style.display = 'none';
             errorBox.innerText = '';
 
-            // Validation
             if(!phone || !pin) {
                 showError("Please enter your phone number and PIN.");
                 return;
@@ -93,14 +91,12 @@
                 return;
             }
 
-            // Start Loading State
             btn.textContent = "Authenticating...";
             btn.disabled = true;
 
             const payload = { phone: phone, pin: pin };
 
             try {
-                // Connect to your Hugging Face Backend
                 const response = await fetch('https://uzoagroai-uzoagro-api.hf.space/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -109,8 +105,6 @@
 
                 if (response.ok) {
                     const data = await response.json();
-
-                    // Success! Save the safe user profile locally
                     localStorage.setItem('uzoagro_user', JSON.stringify({
                         name: data.user.name,
                         role: data.user.role,
@@ -118,19 +112,15 @@
                         email: data.user.email,
                         primary_city: data.user.primary_city
                     }));
-
-                    // Redirect to the shiny new dashboard
                     window.location.href = 'dashboard.html';
                 } else {
                     const errorData = await response.json();
                     let errorMessage = "Invalid login credentials.";
 
-                    // Check if the error is a string or a complex object
                     if (errorData.detail) {
                         if (typeof errorData.detail === 'string') {
                             errorMessage = errorData.detail;
                         } else {
-                            // If it's an object/array, stringify it so we can actually read the backend error
                             errorMessage = JSON.stringify(errorData.detail);
                         }
                     }
@@ -138,6 +128,12 @@
                     btn.textContent = originalText;
                     btn.disabled = false;
                 }
+            } catch (err) {
+                // THIS IS THE CATCH BLOCK THAT WAS MISSING!
+                showError("Connection error to UzoAgro Cloud. Please try again.");
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
         }
 
         function showError(message) {

@@ -213,19 +213,13 @@
                         });
 
                         if (response.ok) {
-                            // Save profile safely to the browser
                             localStorage.setItem('uzoagro_user', JSON.stringify({
-                                name: name,
-                                role: role,
-                                phone: phone,
-                                email: email,
-                                primary_city: primary_city
+                                name: name, role: role, phone: phone, email: email, primary_city: primary_city
                             }));
                             window.location.href = 'dashboard.html';
                         } else {
                             const errorData = await response.json();
                             let errorMessage = "Error creating account.";
-
                             if (errorData.detail) {
                                 if (typeof errorData.detail === 'string') {
                                     errorMessage = errorData.detail;
