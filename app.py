@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
+from typing import Optional
 
 # Import our new database manager and the matching engine
 from database import get_db_connection, init_db
@@ -90,11 +91,13 @@ class UserSignup(BaseModel):
     phone: str
     nin: str
     primary_city: str
+    pin: str
+    email: Optional[str] = None
 
 
 class UserLogin(BaseModel):
     phone: str
-    password: str
+    pin: str
 
 
 # --- API Endpoints ---
@@ -168,78 +171,98 @@ def send_welcome_email(user_email: str, user_name: str, role: str):
 
 
 @app.post("/api/signup")
-async def create_user(user_data: dict):
-    async def create_user(user_data: dict, background_tasks: BackgroundTasks):
-        """
-        Creates a user account and triggers a background email task if an email is provided.
-        """
-        # ... (Include your Paystack verification logic here) ...
+async def create_user(user_data: UserSignup, background_tasks: BackgroundTasks):
+    """
+    Creates a user account and triggers a background email task if an email is provided.
+    """
+    # Extract data securely from the Pydantic model
+    role = user_data.role
+    name = user_data.name
+    phone = user_data.phone
+    nin = user_data.nin
+    primary_city = user_data.primary_city
+    email = user_data.email
+    pin = user_data.pin
 
-        role = user_data.get("role")
-        name = user_data.get("name")
-        phone = user_data.get("phone")
-        nin = user_data.get("nin")
-        primary_city = user_data.get("primary_city")
-        email = user_data.get("email")
-        pin = user_data.get("pin")
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        try:
-            # Check for duplicates
-            cursor.execute("SELECT phone FROM users WHERE phone = %s", (phone,))
-            if cursor.fetchone():
-                raise HTTPException(status_code=400, detail="Phone number already registered.")
-
-            # Insert user (handling optional email)
-            cursor.execute(
-                "INSERT INTO users (role, name, phone, nin, primary_city, email, pin) VALUES (%s, %s, %s, %s, %s, %s)",
-                (role, name, phone, nin, primary_city, email, pin)
-            )
-
-            # Insert driver logic if applicable
-            if role == "driver":
-                cursor.execute(
-                    """INSERT INTO drivers (driver_id, driver_name, phone, current_city, home_base, capacity,
-                                            allowed_crops)
-                       VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-                    (f"DRV-{phone[-4:]}", name, phone, primary_city, primary_city, 15.0, "All")
-                )
-
-            conn.commit()
-
-            # Only queue the email task if they actually provided an email
-            if email and "@" in email:
-                background_tasks.add_task(send_welcome_email, email, name, role)
-
-            return {"status": "success", "message": "Account created successfully."}
-
-        except Exception as e:
-            conn.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
-        finally:
-            cursor.close()
-            conn.close()
-
-@app.post("/api/login", response_class=JSONResponse)
-def login_user(creds: UserLogin):
-    """Verifies user credentials."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # PostgreSQL syntax uses %s
-    cursor.execute("SELECT name, role FROM users WHERE phone = %s AND password = %s", (creds.phone, creds.password))
-    user = cursor.fetchone()
-    conn.close()
+    try:
+        # Check for duplicates
+        cursor.execute("SELECT phone FROM users WHERE phone = %s", (phone,))
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Phone number already registered.")
 
-    if user:
-        # Handles standard psycopg2 tuple responses securely
-        name = user["name"] if isinstance(user, dict) else user[0]
-        role = user["role"] if isinstance(user, dict) else user[1]
-        return JSONResponse(content={"status": "success", "name": name, "role": role})
-    else:
-        raise HTTPException(status_code=401, detail="Invalid phone number or password.")
+        # FIXED: Added the 7th %s placeholder to match the 7 columns
+        cursor.execute(
+            "INSERT INTO users (role, name, phone, nin, primary_city, email, pin) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (role, name, phone, nin, primary_city, email, pin)
+        )
+
+        # Insert driver logic if applicable
+        if role == "driver":
+            # Just a safety check: ensure allowed_crops is not null in your DB or handle it here
+            cursor.execute(
+                """INSERT INTO drivers (driver_id, driver_name, phone, current_city, home_base, capacity, allowed_crops)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                (f"DRV-{phone[-4:]}", name, phone, primary_city, primary_city, 15.0, "All")
+            )
+
+        conn.commit()
+
+        # Queue the email task
+        if email and "@" in email:
+            background_tasks.add_task(send_welcome_email, email, name, role)
+
+        return {"status": "success", "message": "Account created successfully."}
+
+    except Exception as e:
+        conn.rollback()
+        # This print helps you see the error in Hugging Face logs
+        print(f"Signup Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# 3. The Fixed Login Route
+@app.post("/api/login", response_class=JSONResponse)
+def login_user(creds: UserLogin):
+    """Verifies user credentials using PIN."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # FIXED: Now querying the 'pin' column, not 'password'
+        cursor.execute(
+            "SELECT role, name, phone, email, primary_city FROM users WHERE phone = %s AND pin = %s",
+            (creds.phone, creds.pin)
+        )
+        user = cursor.fetchone()
+
+        if user:
+            # Construct the user object securely from the tuple
+            # Tuple order matches the SELECT statement: 0=role, 1=name, 2=phone, 3=email, 4=city
+            return JSONResponse(content={
+                "status": "success",
+                "user": {
+                    "role": user[0],
+                    "name": user[1],
+                    "phone": user[2],
+                    "email": user[3],
+                    "primary_city": user[4]
+                }
+            })
+        else:
+            raise HTTPException(status_code=401, detail="Invalid phone number or PIN.")
+
+    except Exception as e:
+        print(f"Login Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+    finally:
+        cursor.close()
+        conn.close()
 
 
 @app.post("/api/diagnose/image", response_class=JSONResponse)
