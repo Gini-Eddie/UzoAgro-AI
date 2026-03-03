@@ -234,7 +234,7 @@ def login_user(creds: UserLogin):
     cursor = conn.cursor()
 
     try:
-        # FIXED: Now querying the 'pin' column, not 'password'
+        # We select the columns we need
         cursor.execute(
             "SELECT role, name, phone, email, primary_city FROM users WHERE phone = %s AND pin = %s",
             (creds.phone, creds.pin)
@@ -242,24 +242,36 @@ def login_user(creds: UserLogin):
         user = cursor.fetchone()
 
         if user:
-            # Construct the user object securely from the tuple
-            # Tuple order matches the SELECT statement: 0=role, 1=name, 2=phone, 3=email, 4=city
-            return JSONResponse(content={
-                "status": "success",
-                "user": {
-                    "role": user[0],
-                    "name": user[1],
-                    "phone": user[2],
-                    "email": user[3],
-                    "primary_city": user[4]
-                }
-            })
+            # ROBUST FIX: Check if the database gave us a Dictionary or a Tuple
+            if isinstance(user, dict):
+                return JSONResponse(content={
+                    "status": "success",
+                    "user": {
+                        "role": user['role'],
+                        "name": user['name'],
+                        "phone": user['phone'],
+                        "email": user['email'],
+                        "primary_city": user['primary_city']
+                    }
+                })
+            else:
+                # It's a Tuple (Access by Number: 0=role, 1=name, etc.)
+                return JSONResponse(content={
+                    "status": "success",
+                    "user": {
+                        "role": user[0],
+                        "name": user[1],
+                        "phone": user[2],
+                        "email": user[3],
+                        "primary_city": user[4]
+                    }
+                })
         else:
             raise HTTPException(status_code=401, detail="Invalid phone number or PIN.")
 
     except Exception as e:
         print(f"Login Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=f"Server Error: {str(e)}")
     finally:
         cursor.close()
         conn.close()

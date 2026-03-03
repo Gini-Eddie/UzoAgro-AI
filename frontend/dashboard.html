@@ -272,46 +272,88 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const userData = JSON.parse(localStorage.getItem('uzoagro_user')) || {
-                name: "Guest User", role: "farmer", phone: "Not provided", email: "Not provided", primary_city: "Unknown"
-            };
-
-            document.getElementById('profileName').innerText = userData.name;
-            document.getElementById('avatarInitials').innerText = userData.name.substring(0, 2).toUpperCase();
-            document.getElementById('profilePhone').innerHTML = `📞 ${userData.phone || "Not provided"}`;
-            document.getElementById('profileEmail').innerHTML = `✉️ ${userData.email || "No email linked"}`;
-            document.getElementById('profileCity').innerHTML = `📍 ${userData.primary_city || "Location unknown"}`;
-            document.getElementById('mobileRole').innerText = userData.role.toUpperCase();
-
-            const entityTag = document.getElementById('profileEntity');
-            if(userData.role === 'farmer') {
-                entityTag.innerHTML = `🌾 Farm: ${userData.name.split(' ')[0]}'s Farm`;
-            } else {
-                entityTag.innerHTML = `🚛 Truck: ${userData.name.split(' ')[0]} Logistics`;
+            // 1. Retrieve and Parse User Data
+            const rawData = localStorage.getItem('uzoagro_user');
+            if (!rawData) {
+                window.location.href = 'login.html';
+                return;
             }
 
-            const tips = [
-                "Rotating cassava with legumes restores soil nitrogen naturally and boosts your next yield.",
-                "Ensure maize is dried to exactly 14% moisture before bagging to completely prevent aflatoxins.",
-                "Market Insight: Transport backhaul costs are usually 15% lower mid-week."
-            ];
-            document.getElementById('dailyTip').innerText = tips[Math.floor(Math.random() * tips.length)];
+            try {
+                const user = JSON.parse(rawData);
+
+                // 2. Update Greeting and Profile Names
+                const firstName = user.name ? user.name.split(' ')[0] : "Farmer";
+                const hour = new Date().getHours();
+                const timeGreeting = hour < 12 ? "Good morning," : hour < 18 ? "Good afternoon," : "Good evening,";
+
+                // Update specific elements if they exist
+                if (document.getElementById('greeting')) document.getElementById('greeting').innerText = `${timeGreeting} ${firstName}!`;
+                if (document.getElementById('modalName')) document.getElementById('modalName').innerText = user.name || "Guest";
+                if (document.getElementById('mobileRole')) document.getElementById('mobileRole').innerText = user.role.toUpperCase();
+
+                // 3. Set Avatar Initials
+                if (document.getElementById('avatarInitials')) {
+                    const initials = user.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : "UA";
+                    document.getElementById('avatarInitials').innerText = initials;
+                }
+
+                // 4. Set Farm/Truck Entity Name
+                if (document.getElementById('profileEntity')) {
+                    if (user.role === 'farmer') {
+                        document.getElementById('profileEntity').innerText = `🌾 ${firstName}'s Farm`;
+                    } else {
+                        document.getElementById('profileEntity').innerText = `🚛 ${firstName} Logistics`;
+                    }
+                }
+
+                // 5. Populate Contact Modal Details
+                if (document.getElementById('modalPhone')) document.getElementById('modalPhone').innerText = user.phone || "---";
+                if (document.getElementById('modalEmail')) document.getElementById('modalEmail').innerText = user.email || "---";
+                if (document.getElementById('modalCity')) document.getElementById('modalCity').innerText = user.primary_city || "---";
+
+                // 6. Generate Daily Tip
+                generateDailyTip();
+
+            } catch (e) {
+                console.error("Error parsing user data:", e);
+                localStorage.removeItem('uzoagro_user');
+                window.location.href = 'login.html';
+            }
         });
+
+        // 7. Core App Functions
+        function generateDailyTip() {
+            const tips = [
+                "Rotating cassava with legumes restores soil nitrogen naturally.",
+                "Market Insight: Transport backhaul costs are usually 15% lower mid-week.",
+                "Ensure maize is dried to exactly 14% moisture to prevent aflatoxins.",
+                "Monitor tomato leaves daily; early blight is easier to treat in the first 48 hours."
+            ];
+            const randomTip = tips[Math.floor(Math.random() * tips.length)];
+            if(document.getElementById('dailyTip')) document.getElementById('dailyTip').innerText = randomTip;
+        }
 
         let map;
         function switchTab(tabId) {
+            // Hide all views and remove active class from navs
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            // Activate selected view and nav
             document.getElementById(`view-${tabId}`).classList.add('active');
             if(document.getElementById(`desk-${tabId}`)) document.getElementById(`desk-${tabId}`).classList.add('active');
             if(document.getElementById(`mob-${tabId}`)) document.getElementById(`mob-${tabId}`).classList.add('active');
 
+            // Map resize fix for logistics tab
             if (tabId === 'logistics') {
                 setTimeout(() => {
                     if (!map) {
                         map = L.map('map').setView([9.0820, 8.6753], 6);
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                    } else { map.invalidateSize(); }
+                    } else {
+                        map.invalidateSize();
+                    }
                 }, 100);
             }
         }
@@ -339,31 +381,16 @@
             }, 1500);
         }
 
+        // 8. Profile & Logout Modal Logic
+        function showProfileModal() { document.getElementById('profileModal').style.display = 'flex'; }
+        function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
+
         function showLogoutModal() { document.getElementById('logoutModal').style.display = 'flex'; }
         function closeLogoutModal() { document.getElementById('logoutModal').style.display = 'none'; }
-        function confirmLogout() { localStorage.removeItem('uzoagro_user'); window.location.href = 'index.html'; }
 
-        // Profile Modal Logic
-        function showProfileModal() {
-            const userData = JSON.parse(localStorage.getItem('uzoagro_user')) || {};
-
-            // Populate the safe data
-            document.getElementById('modalName').innerText = userData.name || "Guest User";
-            document.getElementById('modalPhone').innerText = userData.phone || "Not provided";
-            document.getElementById('modalEmail').innerText = userData.email || "No email linked";
-            document.getElementById('modalCity').innerText = userData.primary_city || "Unknown";
-
-            if(userData.role === 'farmer') {
-                document.getElementById('modalEntity').innerText = `🌾 ${userData.name.split(' ')[0]}'s Farm`;
-            } else {
-                document.getElementById('modalEntity').innerText = `🚛 ${userData.name.split(' ')[0]} Logistics`;
-            }
-
-            document.getElementById('profileModal').style.display = 'flex';
-        }
-
-        function closeProfileModal() {
-            document.getElementById('profileModal').style.display = 'none';
+        function confirmLogout() {
+            localStorage.removeItem('uzoagro_user');
+            window.location.href = 'index.html';
         }
     </script>
 </body>
