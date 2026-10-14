@@ -14,3 +14,15 @@ __pycache__/
 
 .idea/
 *.db
+.trace-venv/
+node_modules/
+artifacts/
+cache/
+coverage/
+.uv-cache/
+.npm-cache/
+.hardhat-node.log
+
+# Local deployment checkout and disposable test files
+.deploy/
+.test-temp/

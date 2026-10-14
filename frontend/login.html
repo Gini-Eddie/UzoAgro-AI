@@ -1,146 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Log In | UzoAgro AI</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
-    <style>
-        :root {
-            --dark-green: #143621; --lime-green: #D4ED6D; --accent-orange: #C05621;
-            --ash-black: #1A202C; --shade-white: #F4F7F6; --pure-white: #FFFFFF;
-            --border-color: #E2E8F0; --radius: 16px;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--shade-white); color: var(--ash-black); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1.5rem; }
-
-        .auth-card { background: var(--pure-white); padding: 3rem 2.5rem; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 450px; animation: slideUp 0.4s ease; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        .logo-header { text-align: center; margin-bottom: 2.5rem; }
-        .logo-header a { color: var(--dark-green); font-size: 2.2rem; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; font-weight: 800; letter-spacing: -0.5px; }
-
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.95rem; color: var(--dark-green); }
-        input { width: 100%; padding: 1rem; border: 1.5px solid var(--border-color); border-radius: 12px; font-size: 1.1rem; background: #F8FAFC; color: var(--ash-black); transition: all 0.2s; }
-        input:focus { outline: none; border-color: var(--dark-green); background: var(--pure-white); box-shadow: 0 0 0 4px rgba(212, 237, 109, 0.2); }
-
-        /* Secure PIN Styling */
-        .pin-input { letter-spacing: 12px; font-size: 1.5rem; font-weight: bold; text-align: center; font-family: monospace; }
-
-        .btn { width: 100%; background: var(--dark-green); color: white; border: none; padding: 1.1rem; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 1rem; transition: 0.2s; box-shadow: 0 4px 12px rgba(20, 54, 33, 0.15); }
-        .btn:active { transform: scale(0.98); background: #0f2919; }
-        .btn:disabled { background: #94A3B8; cursor: not-allowed; box-shadow: none; }
-
-        .error-message { color: #DC2626; background: #FEE2E2; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; margin-bottom: 1rem; text-align: center; display: none; border: 1px solid #FCA5A5; font-weight: 500; }
-
-        /* Mobile Adjustments */
-        @media (max-width: 480px) {
-            .auth-card { padding: 2.5rem 1.5rem; border-radius: 20px; }
-            .logo-header { margin-bottom: 2rem; }
-        }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#173d2b"><title>Welcome back · UzoAgro</title>
+<link rel="stylesheet" href="login.css"><script src="auth.js"></script><script src="login-behavior.js" defer></script>
 </head>
 <body>
-
-    <div class="auth-card">
-        <div class="logo-header">
-            <a href="index.html">🌿 UzoAgro</a>
-            <p style="color: #64748B; margin-top: 0.5rem; font-size: 1.05rem;">Welcome back.</p>
-        </div>
-
-        <div id="errorMessage" class="error-message"></div>
-
-        <form id="loginForm" onsubmit="event.preventDefault(); submitLogin();">
-            <div class="form-group">
-                <label>Phone Number</label>
-                <input type="tel" id="loginPhone" placeholder="080XXXXXXXX" required inputmode="numeric">
-            </div>
-
-            <div class="form-group">
-                <label>4-Digit Secure PIN</label>
-                <input type="password" id="loginPin" class="pin-input" placeholder="••••" maxlength="4" pattern="\d{4}" required inputmode="numeric">
-            </div>
-
-            <button type="submit" class="btn" id="loginBtn">Secure Log In</button>
-
-            <p style="text-align: center; margin-top: 1.5rem; color: #64748B; font-size: 0.95rem;">
-                Don't have an account? <a href="signup.html" style="color: var(--dark-green); font-weight: bold; text-decoration: none;">Sign up here</a>
-            </p>
-        </form>
-    </div>
-
-    <script>
-        async function submitLogin() {
-            const btn = document.getElementById('loginBtn');
-            const errorBox = document.getElementById('errorMessage');
-            const originalText = btn.textContent;
-
-            const phone = document.getElementById('loginPhone').value.trim();
-            const pin = document.getElementById('loginPin').value.trim();
-
-            errorBox.style.display = 'none';
-            errorBox.innerText = '';
-
-            if(!phone || !pin) {
-                showError("Please enter your phone number and PIN.");
-                return;
-            }
-            if(pin.length !== 4 || isNaN(pin)) {
-                showError("Your PIN must be exactly 4 numbers.");
-                return;
-            }
-
-            btn.textContent = "Authenticating...";
-            btn.disabled = true;
-
-            const payload = { phone: phone, pin: pin };
-
-            try {
-                const response = await fetch('https://uzoagroai-uzoagro-api.hf.space/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    localStorage.setItem('uzoagro_user', JSON.stringify({
-                        name: data.user.name,
-                        role: data.user.role,
-                        phone: data.user.phone,
-                        email: data.user.email,
-                        primary_city: data.user.primary_city
-                    }));
-                    window.location.href = 'dashboard.html';
-                } else {
-                    const errorData = await response.json();
-                    let errorMessage = "Invalid login credentials.";
-
-                    if (errorData.detail) {
-                        if (typeof errorData.detail === 'string') {
-                            errorMessage = errorData.detail;
-                        } else {
-                            errorMessage = JSON.stringify(errorData.detail);
-                        }
-                    }
-                    showError(errorMessage);
-                    btn.textContent = originalText;
-                    btn.disabled = false;
-                }
-            } catch (err) {
-                // THIS IS THE CATCH BLOCK THAT WAS MISSING!
-                showError("Connection error to UzoAgro Cloud. Please try again.");
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        function showError(message) {
-            const errorBox = document.getElementById('errorMessage');
-            errorBox.innerText = message;
-            errorBox.style.display = 'block';
-        }
-    </script>
+<div class="login-layout">
+<aside class="story" aria-label="The UzoAgro journey">
+<div class="story-image" aria-hidden="true"></div>
+<a class="brand" href="index.html" aria-label="UzoAgro home"><span class="brand-symbol"><svg viewBox="0 0 24 24"><path d="M20 4C11 3 4 7 5 14c1 6 8 7 12 3 3-3 3-8 3-13ZM5 20l10-10"/></svg></span><span><span class="brand-name">uzoagro</span><div class="brand-tagline">GROW. MOVE. TRACE.</div></span></a>
+<div class="story-copy"><div class="eyebrow">ROOTED IN A BETTER TOMORROW</div><h2>Good harvests.<br><span>Better journeys.</span></h2><p>Connecting the people who grow our food with the people who help it reach the world.</p></div>
+<div class="journey-card"><div class="journey-title"><svg viewBox="0 0 24 24"><path d="m12 2 9 4v6c0 6-9 10-9 10S3 18 3 12V6Zm-4 10 3 3 5-6"/></svg>Every harvest. Every handover.</div><div class="journey-stages"><span><i class="stage-dot"></i>Farm</span><svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg><span><i class="stage-dot"></i>On the road</span><svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg><span><i class="stage-dot"></i>Buyer</span></div></div>
+<div class="story-footer"><span>Grown with care. Connected with purpose.</span><span>Nigeria & beyond</span></div>
+</aside>
+<section class="login-side">
+<header class="login-header"><a class="back-link" href="index.html"><svg viewBox="0 0 24 24"><path d="M19 12H5m5-5-5 5 5 5"/></svg>Back to home</a><span>New to UzoAgro?<a href="signup.html" class="signup-link">Create an account ↗</a></span><a href="index.html" class="brand mobile-brand"><span class="brand-symbol"><svg viewBox="0 0 24 24"><path d="M20 4C11 3 4 7 5 14c1 6 8 7 12 3 3-3 3-8 3-13ZM5 20l10-10"/></svg></span><span class="brand-name">uzoagro</span></a><a href="signup.html" class="mobile-signup">Sign up ↗</a></header>
+<main class="login-main">
+<div class="welcome-icon"><svg viewBox="0 0 24 24"><path d="M20 4C11 3 4 7 5 14c1 6 8 7 12 3 3-3 3-8 3-13ZM5 20l10-10"/></svg></div>
+<div class="login-eyebrow">YOUR NEXT CHAPTER STARTS HERE</div><h1>Welcome back.</h1><p class="intro">Good to see you again. Sign in to pick up where your journey left off.</p>
+<div id="errorMessage" class="error-message" role="alert" aria-live="polite"></div>
+<form id="loginForm" onsubmit="event.preventDefault(); submitLogin();">
+<div class="form-group"><label for="loginPhone">Phone number</label><div class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 5h4m-3 14h2"/></svg><input type="tel" id="loginPhone" name="phone" placeholder="e.g. 08012345678" pattern="\+?[0-9]{10,15}" required inputmode="tel" autocomplete="tel" aria-describedby="phoneHint"></div><p class="field-hint" id="phoneHint">Use the number registered to your UzoAgro account.</p></div>
+<div class="form-group"><label for="loginPin">4-digit PIN</label><div class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="12" rx="3"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 6v2"/></svg><input type="password" id="loginPin" name="pin" class="pin-input" placeholder="••••" maxlength="4" pattern="[0-9]{4}" required inputmode="numeric" autocomplete="current-password"><button id="pinVisibility" class="pin-visibility" type="button" aria-label="Show PIN" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+<button type="submit" class="login-submit" id="loginBtn">Sign in to your workspace <span aria-hidden="true">→</span></button>
+<p class="account-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 9 4v6c0 6-9 10-9 10S3 18 3 12V6Zm-4 10 3 3 5-6"/></svg>One account for your farm or your next delivery.</p>
+</form>
+<div class="form-divider">JUST CHECKING A HARVEST?</div><a href="trace.html#verify" class="verify-link"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M7 12h10"/></svg>Verify a produce batch</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
+</main>
+<footer class="login-footer"><span>© 2026 UzoAgro. Made for the journey.</span><a href="index.html">Grow with us ↗</a></footer>
+</section>
+</div>
 </body>
 </html>

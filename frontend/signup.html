@@ -42,7 +42,7 @@
             .role-btn { border-radius: 8px; }
         }
     </style>
-</head>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap"><style>body,input,button,select,textarea,body *{font-family:Manrope,sans-serif}.trace-switch{position:fixed;right:18px;bottom:95px;z-index:99;padding:10px 16px;background:#173d2b;color:#d5ed9a;border-radius:25px;font-size:12px;box-shadow:0 4px 18px #0002}</style><script src="auth.js"></script></head>
 <body>
 
     <div class="auth-card">
@@ -73,9 +73,9 @@
                     <input type="tel" id="regPhone" placeholder="080XXXXXXXX" required>
                 </div>
                 <div style="flex: 1;">
-                    <label>NIN (Identity Verification)</label>
+                    <label>NIN (Account Information)</label>
                     <input type="text" id="regNin" placeholder="11-digit NIN" required>
-                    <span class="security-badge">🔒 Encrypted securely</span>
+                    <span class="security-badge">🔒 Private account information</span>
                 </div>
             </div>
 
@@ -202,20 +202,20 @@
                         nin: nin,
                         pin: pin, // <-- Add it to the payload
                         primary_city: primary_city,
+                        capacity: isFarmer ? 15 : parseFloat(document.getElementById("driverCapacity").value),
                         reference: transaction.reference
                     };
 
                     try {
-                        const response = await fetch('https://uzoagroai-uzoagro-api.hf.space/api/signup', {
+                        const response = await fetch(UzoAuth.base + '/api/signup', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
 
                         if (response.ok) {
-                            localStorage.setItem('uzoagro_user', JSON.stringify({
-                                name: name, role: role, phone: phone, email: email, primary_city: primary_city
-                            }));
+                            const data = await response.json();
+                            UzoAuth.save(data);
                             window.location.href = 'dashboard.html';
                         } else {
                             const errorData = await response.json();
@@ -245,5 +245,5 @@
             });
         }
     </script>
-</body>
+<a class="trace-switch" href="trace.html#verify">Verify produce ↗</a></body>
 </html>

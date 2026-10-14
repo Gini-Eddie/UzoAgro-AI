@@ -67,7 +67,7 @@
             .bottom-nav { display: flex; }
         }
     </style>
-</head>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap"><style>body,input,button,select,textarea,body *{font-family:Manrope,sans-serif}.trace-switch{position:fixed;right:18px;bottom:95px;z-index:99;padding:10px 16px;background:#173d2b;color:#d5ed9a;border-radius:25px;font-size:12px;box-shadow:0 4px 18px #0002}</style><script src="auth.js"></script></head>
 <body>
 
     <aside class="sidebar">
@@ -145,6 +145,7 @@
     </nav>
 
     <script>
+UzoAuth.requireUser("trace.html#diagnose").then(user => { if (user) location.replace(user.role === "farmer" ? "trace.html#diagnose" : "dashboard.html"); });
         document.addEventListener("DOMContentLoaded", () => {
             if (!localStorage.getItem('uzoagro_user')) { window.location.href = 'login.html'; }
         });
@@ -234,5 +235,5 @@
             btn.disabled = false;
         }
     </script>
-</body>
+<a class="trace-switch" href="trace.html">Open UzoAgro Trace ↗</a></body>
 </html>

@@ -1,5 +1,9 @@
 # 🚛 UzoAgro AI – Intelligent Agricultural Logistics
 
+## UzoAgro Trace extension
+
+The repository now includes crop assessments, produce batches, SHA-256 fingerprints, Base Sepolia anchoring, supply-chain checkpoints and public QR verification. Start with [TRACE_README.md](TRACE_README.md) for setup, configuration and tests. The new landing page is `frontend/index.html`; the original logistics landing page is preserved in `frontend/logistics.html`.
+
 ![UzoAgro AI Version](https://img.shields.io/badge/version-0.1.0%20MVP-brightgreen)
 ![Python](https://img.shields.io/badge/Python-3.13-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688)
