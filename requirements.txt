@@ -6,3 +6,6 @@ sqlalchemy
 python-dotenv
 requests
 python-multipart
+Pillow
+web3>=7,<8
+qrcode

@@ -4,12 +4,13 @@ from psycopg2.errors import UniqueViolation
 import pandas as pd
 import requests
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks
+from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
@@ -24,7 +25,7 @@ from diagnostics_engine import run_botanical_diagnosis
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("uzoagro-api")
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().with_name('.env'))
 PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY")
 
 def verify_paystack_payment(reference: str) -> bool:
@@ -46,6 +47,15 @@ def verify_paystack_payment(reference: str) -> bool:
     return False
 
 app = FastAPI(title="UzoAgro AI Matching API", version="0.1.0")
+
+# Trace shares the existing application and PostgreSQL configuration.
+from trace_api import router as trace_router
+app.include_router(trace_router)
+from auth_api import router as auth_router
+from auth_api import farmer
+app.include_router(auth_router)
+from logistics_api import router as logistics_router
+app.include_router(logistics_router)
 
 # CORS config explicitly allowing your Vercel frontend (and everything else) to talk to this API
 app.add_middleware(
@@ -106,7 +116,10 @@ class UserLogin(BaseModel):
 def startup_load_data():
     """Ensure database is ready when the server starts."""
     try:
-        init_db()
+        if os.getenv("DATABASE_URL"):
+            init_db()
+        else:
+            logger.warning("DATABASE_URL is not configured; account endpoints will return 503.")
     except Exception as e:
         logger.exception("Failed to initialize database on startup")
         raise
@@ -170,115 +183,8 @@ def send_welcome_email(user_email: str, user_name: str, role: str):
     msg.attach(MIMEText(html_content, 'html'))
 
 
-@app.post("/api/signup")
-async def create_user(user_data: UserSignup, background_tasks: BackgroundTasks):
-    """
-    Creates a user account and triggers a background email task if an email is provided.
-    """
-    # Extract data securely from the Pydantic model
-    role = user_data.role
-    name = user_data.name
-    phone = user_data.phone
-    nin = user_data.nin
-    primary_city = user_data.primary_city
-    email = user_data.email
-    pin = user_data.pin
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    try:
-        # Check for duplicates
-        cursor.execute("SELECT phone FROM users WHERE phone = %s", (phone,))
-        if cursor.fetchone():
-            raise HTTPException(status_code=400, detail="Phone number already registered.")
-
-        # FIXED: Added the 7th %s placeholder to match the 7 columns
-        cursor.execute(
-            "INSERT INTO users (role, name, phone, nin, primary_city, email, pin) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-            (role, name, phone, nin, primary_city, email, pin)
-        )
-
-        # Insert driver logic if applicable
-        if role == "driver":
-            # Just a safety check: ensure allowed_crops is not null in your DB or handle it here
-            cursor.execute(
-                """INSERT INTO drivers (driver_id, driver_name, phone, current_city, home_base, capacity, allowed_crops)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-                (f"DRV-{phone[-4:]}", name, phone, primary_city, primary_city, 15.0, "All")
-            )
-
-        conn.commit()
-
-        # Queue the email task
-        if email and "@" in email:
-            background_tasks.add_task(send_welcome_email, email, name, role)
-
-        return {"status": "success", "message": "Account created successfully."}
-
-    except Exception as e:
-        conn.rollback()
-        # This print helps you see the error in Hugging Face logs
-        print(f"Signup Error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
-
-
-# 3. The Fixed Login Route
-@app.post("/api/login", response_class=JSONResponse)
-def login_user(creds: UserLogin):
-    """Verifies user credentials using PIN."""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    try:
-        # We select the columns we need
-        cursor.execute(
-            "SELECT role, name, phone, email, primary_city FROM users WHERE phone = %s AND pin = %s",
-            (creds.phone, creds.pin)
-        )
-        user = cursor.fetchone()
-
-        if user:
-            # ROBUST FIX: Check if the database gave us a Dictionary or a Tuple
-            if isinstance(user, dict):
-                return JSONResponse(content={
-                    "status": "success",
-                    "user": {
-                        "role": user['role'],
-                        "name": user['name'],
-                        "phone": user['phone'],
-                        "email": user['email'],
-                        "primary_city": user['primary_city']
-                    }
-                })
-            else:
-                # It's a Tuple (Access by Number: 0=role, 1=name, etc.)
-                return JSONResponse(content={
-                    "status": "success",
-                    "user": {
-                        "role": user[0],
-                        "name": user[1],
-                        "phone": user[2],
-                        "email": user[3],
-                        "primary_city": user[4]
-                    }
-                })
-        else:
-            raise HTTPException(status_code=401, detail="Invalid phone number or PIN.")
-
-    except Exception as e:
-        print(f"Login Error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Server Error: {str(e)}")
-    finally:
-        cursor.close()
-        conn.close()
-
-
 @app.post("/api/diagnose/image", response_class=JSONResponse)
-async def analyze_crop_image(file: UploadFile = File(...)):
+async def analyze_crop_image(file: UploadFile = File(...), owner=Depends(farmer)):
     """Receives a crop image from the frontend and passes it to the AI."""
     try:
         # Read the image file into memory
@@ -294,8 +200,9 @@ async def analyze_crop_image(file: UploadFile = File(...)):
 
 
 @app.post("/match/custom", response_class=JSONResponse)
-def match_custom_request(req: FarmerRequest):
+def match_custom_request(req: FarmerRequest, owner=Depends(farmer)):
     """Saves the request to the DB and returns the top 3 AI matches."""
+    req.farmer_name = owner['name']
     if req.pickup_city not in CITIES or req.dropoff_city not in CITIES:
         raise HTTPException(status_code=400, detail="Invalid city selected")
 
