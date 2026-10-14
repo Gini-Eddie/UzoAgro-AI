@@ -44,3 +44,9 @@ node --check frontend/dashboard.js
 ```
 
 The account, transport and Trace tests use disposable fixtures, not real Neon users or shipments. Browser validation covers matching, requesting, accepting, contact unlocking, pickup, delivery, both dashboards and mobile rendering. `tests/browser_fixture.py` is explicitly a test-only server and is never used by `trace_server.py`.
+
+## Local demo driver matching
+
+Run `.trace-venv/Scripts/python.exe tests/browser_fixture.py`, then open http://127.0.0.1:8002/login.html. This server uses disposable SQLite data; it never seeds Neon. Farmer: `00000000001`; primary driver: `00000000002`; PIN: `1234`. All accounts and routes are fictional.
+
+Try Onitsha → Lagos, Cassava, 0.25 tonnes, today: Chidi and Ngozi qualify. The small-capacity and reverse-direction drivers do not. Abuja → Kano with Rice and Lagos → Ibadan with Tomatoes exercise other sample routes. Drivers can inspect seeded farmer pickup requests and accept, pick up, and deliver shipments. Restarting the server resets records and refreshes sample route dates.

@@ -8,7 +8,7 @@ window.UzoAuth = (() => {
  const loginUrl=(next='dashboard.html')=>'login.html?next='+encodeURIComponent(next);
  async function me(){if(!token())return null;const result=await request('/api/me');localStorage.setItem('uzoagro_user',JSON.stringify(result.user));return result.user;}
  async function requireUser(next='dashboard.html'){if(!token()){location.replace(loginUrl(next));return null;}try{return await me();}catch(err){if(!token())location.replace(loginUrl(next));else{document.body.innerHTML='';const message=document.createElement('p');message.style.cssText='padding:40px;font-family:Manrope,sans-serif';message.textContent=err.message+' Refresh to retry.';document.body.appendChild(message);}return null;}}
- function destination(user){const requested=new URLSearchParams(location.search).get('next');return user.role==='farmer'&&requested&&/^trace\.html(?:#(?:overview|batches|new|diagnose|account|batch\/[A-Z0-9-]+))?$/.test(requested)?requested:'dashboard.html';}
+ function destination(user){const requested=new URLSearchParams(location.search).get('next');if(requested&&/^dashboard\.html#(?:overview|transport|shipments|routes|profile)$/.test(requested)){const page=requested.split('#')[1];return (page==='transport'&&user.role!=='farmer')||(page==='routes'&&user.role!=='driver')?'dashboard.html':requested;}return user.role==='farmer'&&requested&&/^trace\.html(?:#(?:overview|batches|new|diagnose|account|batch\/[A-Z0-9-]+))?$/.test(requested)?requested:'dashboard.html';}
  async function logout(){try{await request('/api/logout','POST');}finally{clear();location.href='login.html';}}
  return {base,token,clear,save,request,me,requireUser,loginUrl,destination,logout};
 })();
